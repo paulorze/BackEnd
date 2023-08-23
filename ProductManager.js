@@ -2,9 +2,9 @@ const fs = require('fs/promises');
 
 class ProductManager {
     #products
-    constructor () {
+    constructor ({path}) {
         this.#products = [];
-        this.path = './products.json';
+        this.path = path;
     };
 
     async init() {
@@ -102,7 +102,7 @@ class ProductManager {
 
 
 (async () =>{
-    const productManager = new ProductManager();
+    const productManager = new ProductManager({path: './products.json'});
     await productManager.init();
     await productManager.addProduct({
         title : 'Producto 5',
