@@ -13,25 +13,21 @@ class ProductManager {
             const productsData = await fs.readFile(this.path, 'UTF-8');
             this.#products = JSON.parse(productsData);
         } catch {
-            console.log('No se pudieron obtener todos los productos. Se trabajara como si no existiera ninguno');
+            throw new Error('No se pudieron obtener todos los productos. Se trabajara como si no existiera ninguno');
         };
     };
 
     async addProduct ({title, description, price, thumbnail, code, stock}) {
         const existingCode = this.#products.find(product => product.code === code);
         if (existingCode) {
-            console.log('El codigo ingresado ya fue utilizado en otro producto.');
-            return;
-        };
-        if (!title || !description || !price || !thumbnail || !code || !stock) {
-            console.log('Por favor, ingrese todos los datos necesarios del producto (titulo, descripcion, precio, miniatura, codigo, stock).');
-            return;
+            throw new Error ('El codigo ingresado ya fue utilizado en otro producto.')
         };
         const product = {
             id : this.#products.length,
             title,
             description,
             price,
+            status: true,
             thumbnail,
             code,
             stock
@@ -39,49 +35,37 @@ class ProductManager {
         this.#products.push(product);
         try {
             await fs.writeFile(this.path, JSON.stringify(this.#products, null, 4), 'UTF-8');
-            console.log('Producto agregado exitosamente.');
+            return
         } catch {
-            console.log('Error al cargar el producto.');
+            throw new Error ('Error al cargar el producto.');
         };
-        return product;
     };
 
-    async updateProduct(id, key, value) {
+    async updateProduct(id, data) {
         const foundProduct = this.getProductByID(id)
-        if (!foundProduct) return;
-        const validKeys = ['all', 'title', 'description', 'price', 'thumbnai', 'code', 'stock']
-        if (!validKeys.includes(key)) return console.log('Por favor, ingrese un parametro valido.');
-        if(key === 'all') {
-            this.#products = this.#products.map(product =>{
-                if (product.id === foundProduct.id) {
-                    return {...product, 
-                        title: value.title,
-                        description: value.description,
-                        price: value.price,
-                        thumbnail: value.thumbnail,
-                        code: value.code,
-                        stock : value.stock}
-                } else {
-                    return product
-                };
-            });
-        } else{
-            this.#products = this.#products.map(product =>{
-                if (product.id === foundProduct.id) {
-                    product[key] = value
-                }
-                return product 
-            });
+        const validKeys = ['title', 'description', 'price', 'thumbnail', 'code', 'stock']
+        for (const [key, value] of Object.entries(data)) {
+            if (!validKeys.includes(key)) throw new Error ('Por favor, ingrese solamente parametros validos (title, description, price, thumbnail, code, stock).');
         };
+        let updatedProduct;
+        this.#products = this.#products.map(product =>{
+            if (product.id === foundProduct.id) {
+                for (const [key, value] of Object.entries(data)) {
+                    product[key] = value;
+                };
+                updatedProduct = product;
+            };
+            return product;
+        });
         await fs.writeFile(this.path, JSON.stringify(this.#products, null, 4), 'UTF-8');
+        return updatedProduct;
     };
 
     async deleteProduct(id){
         const foundProduct = this.getProductByID(id)
-        if (!foundProduct) return;
         this.#products = this.#products.filter(product => product.id !== foundProduct.id)
         await fs.writeFile(this.path, JSON.stringify(this.#products, null, 4), 'UTF-8');
-        console.log('Producto eliminado exitosamente.');
+        return
     };
 
     getProducts () {
@@ -100,15 +84,14 @@ class ProductManager {
     getProductByID (productID) {
         const productFound = this.#products.find(product => product.id === productID);
         if (!productFound) {
-            throw new Error(`NOT FOUND: El producto con ID ${productID} no existe.`);
+            throw new Error(`404 NOT FOUND: El producto con ID ${productID} no existe.`);
         } else {
             return productFound;
-        }
+        };
     };
 };
 
 export {ProductManager};
-
 
 // (async () =>{
 //     const productManager = new ProductManager({path: './src/products.json'});

@@ -88,5 +88,19 @@
         "thumbnail": "https://w7.pngwing.com/pngs/405/993/png-transparent-pikachu-haunter-drawing-pokxe9mon-art-tongue-purple-monster-purple-mammal-cat-like-mammal.png",
         "code": "P010",
         "stock": 20
+    },
+    {
+        "id": 10,
+        "title": "Producto 11",
+        "description": "Producto nuevo y muy piola",
+        "price": 200,
+        "status": true,
+        "thumbnail": [
+            "https://w7.pngwing.com/pngs/405/993/png-transparent-pikachu-haunter-drawing-pokxe9mon-art-tongue-purple-monster-purple-mammal-cat-like-mammal.png",
+            "https://w7.pngwing.com/pngs/405/993/png-transparent-pikachu-haunter-drawing-pokxe9mon-art-tongue-purple-monster-purple-mammal-cat-like-mammal.png",
+            "https://w7.pngwing.com/pngs/405/993/png-transparent-pikachu-haunter-drawing-pokxe9mon-art-tongue-purple-monster-purple-mammal-cat-like-mammal.png"
+        ],
+        "code": "P011",
+        "stock": 20
     }
 ]
