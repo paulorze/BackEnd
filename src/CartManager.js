@@ -1,4 +1,5 @@
 import {promises as fs} from 'fs';
+import {v4 as uuidv4} from 'uuid';
 
 class CartManager {
     #carts
@@ -18,7 +19,7 @@ class CartManager {
 
     async saveCart({products = null}) {
         const cart = {
-            id: this.#carts.length,
+            id: uuidv4(),
             products: products ? products : []
         };
         this.#carts.push(cart);

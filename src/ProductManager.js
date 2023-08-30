@@ -1,5 +1,5 @@
-// const fs = require('fs/promises');
 import {promises as fs} from 'fs';
+import {v4 as uuidv4} from 'uuid';
 
 class ProductManager {
     #products
@@ -17,18 +17,18 @@ class ProductManager {
         };
     };
 
-    async addProduct ({title, description, price, thumbnail, code, stock}) {
+    async addProduct ({title, description, price, thumbnail  = null, code, stock}) {
         const existingCode = this.#products.find(product => product.code === code);
         if (existingCode) {
             throw new Error ('El codigo ingresado ya fue utilizado en otro producto.')
         };
         const product = {
-            id : this.#products.length,
+            id : uuidv4(),
             title,
             description,
             price,
             status: true,
-            thumbnail,
+            thumbnail: thumbnail? thumbnail : [],
             code,
             stock
         };
