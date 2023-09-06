@@ -1,6 +1,9 @@
 import { Router } from "express";
-const router = Router();
+import { uploader } from "../utils.js";
 import { ProductManager } from "../ProductManager.js";
+import { NotFoundError, ServerError, ValidationError } from "../ErrorManager.js";
+
+const router = Router();
 
 (async()=> {
     const productManager = new ProductManager({path: './products.json'});
@@ -12,7 +15,7 @@ import { ProductManager } from "../ProductManager.js";
         try {
             return res.send({status: "success", payload: productManager.getProductsLimit(limit)});
         } catch (error) {
-            return res.status(400).send({status: "error", error: error.message});
+            return res.status(412).send({status: "error", error: error.message});
         }
     });
     
@@ -21,20 +24,30 @@ import { ProductManager } from "../ProductManager.js";
         try {
             return res.send({status: "success", payload: productManager.getProductByID(pid)});
         } catch (error) {
-            return res.status(400).send({status: "error", error: error.message});
+            return res.status(404).send({status: "error", error: error.message});
         }
     });
 
-    router.post('/', async (req, res)=> {
+    router.post('/', uploader.single('thumbnail'), async (req, res)=> {
+        if (!req.file) {
+            return res.status(428).send({status: 'error', error: 'Por favor, elija una imagen de formato valido.'})
+        }
         const product = req.body;
-        if (!product.title || !product.description || !product.price || !product.code || !product.stock) {
-            return res.status(400).send({status: "error", error: "Por favor, ingrese todos los datos necesarios del producto (titulo, descripcion, precio, miniatura, codigo, stock)."});
+        if (!product.title || !product.category || !product.description || !product.price || !product.code || !product.stock) {
+            return res.status(428).send({status: "error", error: "Por favor, ingrese todos los datos necesarios del producto (titulo, descripcion, precio, miniatura, codigo, stock)."});
         };
         try {
-            await productManager.addProduct({title: product.title, description: product.description, price:product.price, thumbnail: product.thumbnail, code: product.code, stock: product.stock});
+            await productManager.addProduct({title: product.title, category: product.category, description: product.description, price:product.price, thumbnail: req.file.path, code: product.code, stock: product.stock});
             return res.send({status: "success", message: "Producto agregado exitosamente."});
         } catch (e) {
-            return res.status(400).send({status: "error", error: e.message});
+            switch (true) {
+                case (e instanceof ValidationError):
+                    return res.status(412).send({status: "error", error: e.message});
+                    break;
+                case (e instanceof ServerError):
+                    return res.status(500).send({status: "error", error: e.message});
+                    break;
+            }
         }
     });
 
@@ -45,7 +58,17 @@ import { ProductManager } from "../ProductManager.js";
             await productManager.updateProduct(pid, paramsToUpdate);
             return res.send({status: "success", message: "Producto actualizado exitosamente."});
         } catch (error) {
-            return res.status(400).send({status: "error", error: error.message});
+            switch (true) {
+                case (e instanceof NotFoundError):
+                    return res.status(404).send({status: "error", error: e.message});
+                    break;
+                case (e instanceof ValidationError):
+                    return res.status(412).send({status: "error", error: e.message});
+                    break;
+                case (e instanceof ServerError):
+                    return res.status(500).send({status: "error", error: e.message});
+                    break;
+            }
         };
     });
 
@@ -55,7 +78,14 @@ import { ProductManager } from "../ProductManager.js";
             await productManager.deleteProduct(pid);
             return res.send({status: "success", message: "Producto eliminado exitosamente."});
         } catch (error) {
-            return res.status(400).send({status: "error", error: error.message});
+            switch (true) {
+                case (e instanceof NotFoundError):
+                    return res.status(404).send({status: "error", error: e.message});
+                    break;
+                case (e instanceof ServerError):
+                    return res.status(500).send({status: "error", error: e.message});
+                    break;
+            }
         };
     });
 })();

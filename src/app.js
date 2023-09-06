@@ -1,9 +1,16 @@
 // import { ProductManager } from "./ProductManager.js";
 // import { CartManager } from "./CartManager.js";
 import express from 'express';
-const app = express();
+import {fileURLToPath} from 'url';
+import path from 'path';
 import productsRouter from './routes/products.router.js';
 import cartsRouter from './routes/carts.router.js';
+
+
+const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use('/', express.static(path.join(__dirname, '..', 'public')));
 
 (async()=>{
     // const productManager = new ProductManager({path: './products.json'});

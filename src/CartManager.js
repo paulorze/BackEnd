@@ -1,5 +1,6 @@
 import {promises as fs} from 'fs';
 import {v4 as uuidv4} from 'uuid';
+import { NotFoundError, ServerError } from './ErrorManager.js';
 
 class CartManager {
     #carts
@@ -13,7 +14,7 @@ class CartManager {
             const cartsData = await fs.readFile(this.path, 'UTF-8');
             this.#carts = JSON.parse(cartsData);
         } catch {
-            throw new Error ('No se pudieron obtener los carritos. Se trabajara como si no existiera ninguno')
+            throw new ServerError ('500 INTERNAL SERVER ERROR: No se pudieron obtener los carritos. Se trabajara como si no existiera ninguno')
         };
     };
 
@@ -27,7 +28,7 @@ class CartManager {
             await fs.writeFile(this.path, JSON.stringify(this.#carts, null, 4), 'UTF-8');
             return
         } catch {
-            throw new Error ('Error al guardar el carrito.');
+            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al guardar el carrito.');
         };
     };
 
@@ -37,7 +38,7 @@ class CartManager {
 
     getCartsLimit (limit) {
         if (isNaN(limit) || limit <= 0) {
-            throw new Error('Por favor, ingrese una cantidad de productos a ver valida.')
+            throw new TypeError('412 PRECONDITION FAILED ERROR: Por favor, ingrese una cantidad de productos a ver valida.')
         } else {
             return this.#carts.slice(0, limit);
         }
@@ -46,7 +47,7 @@ class CartManager {
     getCartByID (cid) {
         const cartFound = this.#carts.find(cart => cart.id === cid);
         if (!cartFound) {
-            throw new Error(`404 NOT FOUND: El carrito con ID ${cid} no existe.`);
+            throw new NotFoundError (`404 NOT FOUND: El carrito con ID ${cid} no existe.`);
         } else {
             return cartFound;
         };
@@ -59,7 +60,7 @@ class CartManager {
             await fs.writeFile(this.path, JSON.stringify(this.#carts, null, 4), 'UTF-8');
             return;
         } catch (error) {
-            throw new Error ('500 INTERNAL SERVER ERROR: Error al eliminar el carrito.')
+            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al eliminar el carrito.')
         };
     };
 
@@ -80,7 +81,7 @@ class CartManager {
             await fs.writeFile(this.path, JSON.stringify(this.#carts, null, 4), 'UTF-8');
             return;
         } catch (error) {
-            throw new Error ('500 INTERNAL SERVER ERROR: Error al agregar el producto al carrito.')
+            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al agregar el producto al carrito.')
         };
     };
 };
