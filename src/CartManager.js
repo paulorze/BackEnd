@@ -87,14 +87,3 @@ class CartManager {
 };
 
 export {CartManager};
-
-// (async() => {
-//     const cartManager = new CartManager({path: './src/carts.json'});
-//     await cartManager.init();
-//     await cartManager.saveCart();
-//     console.log(cartManager.getCarts);
-//     console.log(cartManager.getCartByID(2));
-//     // console.log(cartManager.getCartByID(22));
-//     await cartManager.deleteCart(10);
-//     // await cartManager.deleteCart(15);
-// })();

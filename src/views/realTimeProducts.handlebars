@@ -1,0 +1,119 @@
+<section>
+    <h2>
+        Registro de productos
+    </h2>
+    <form action="/realTimeProducts" method="post" enctype="multipart/form-data">
+        <label for="title">
+            Nombre
+        </label>
+        <input type="text" name="title" id="title" required>
+        <label for="descrption">
+            Descripcion
+        </label>
+        <input type="text" name="description" id="description" required>            <label for="descrption">
+            Categoria
+        </label>
+        <input type="text" name="category" id="category" required>
+        <label for="price">
+            Precio
+        </label>
+        <input type="number" name="price" id="price" required>
+        <label for="thumbnail">
+            Miniaturas
+        </label>
+        <input type="file" name="thumbnail" id="thumbnail" accept="image/*" required>
+        <label for="code">
+            Codigo
+        </label>
+        <input type="text" name="code" id="code" required>
+        <label for="stock">
+            Stock
+        </label>
+        <input type="number" name="stock" id="stock" required>
+        <button
+            type="submit"
+            id="submitProduct"
+            onclick="emitter()"
+        >
+            Guardar Producto
+        </button>
+        <button
+            type="reset"
+            id="resetProduct"
+        >
+            Cancelar
+        </button>
+    </form>
+</section>
+<section>
+    <h2>
+        Eliminar producto
+    </h2>
+    <form action="/realTimeProducts?_method=DELETE" method="POST">
+        <input type="hidden" name="_method" value="DELETE">
+        <label for="title">
+            ID
+        </label>
+        <input type="text" name="pid" id="pid" required>
+        <button
+            type="submit"
+            id="submitProduct"
+        >
+            Eliminar Producto
+        </button>
+        <button
+            type="reset"
+            id="resetProduct"
+        >
+            Cancelar
+        </button>
+    </form>
+</section>
+<section>
+    <h2>
+        Lista de Productos
+    </h2>
+    <ul>
+        {{#each products}}
+            <li>
+                <h2>
+                    Producto: {{this.title}}
+                </h2>
+                <h4>
+                    Categoria: {{this.category}}
+                </h4>
+                <h4>
+                    Descripcion: {{this.description}}
+                </h4>
+                <h3>
+                    Precio: ${{this.price}}
+                </h3>
+                <h3>
+                    Stock: {{this.stock}} ud.
+                </h3>
+                <img src={{this.thumbnail.[0]}} alt={{this.title}}>
+            </li>
+        {{/each}}
+    </ul>
+    <ul id="newlyAddedProducts">
+    </ul>
+</section>
+<script src="socket.io/socket.io.js"></script>
+<script src="js/index.js"></script>
+{{!-- <script>
+    const socket = io();
+
+    const emitter = () {
+        console.log('holis')
+        const newProduct = {
+            title : form.querySelector('#title').value,
+            description : form.querySelector('#description').value,
+            category : form.querySelector('#category').value,
+            price : form.querySelector('#price').value,
+            thumbnail : form.querySelector('#thumbnail').value,
+            code : form.querySelector('#code').value,
+            stock : form.querySelector('#stock').value
+        };
+        socket.emit('new-product', newProduct);
+    };
+</script> --}}
