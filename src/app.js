@@ -6,6 +6,7 @@ import {Server} from 'socket.io';
 import productsRouter from './routes/products.router.js';
 import cartsRouter from './routes/carts.router.js';
 import viewsRouter from './routes/views.router.js';
+import { ProductManager } from './ProductManager.js';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -30,12 +31,14 @@ app.use('/', express.static(path.join(__dirname, '..', 'public')));
     app.use('/',viewsRouter);
     
     let newProducts =[];
+    const productManager = new ProductManager({path: './products.json'});
+    await productManager.init();
     socketServer.on('connection', socket=>{
         console.log("New Socket connection established (?)");
-        // socket.emit('update-products',newProducts);
-        socket.on('new-product', newProduct => {
-            console.log('holis3')
-            newProducts.push(newProduct);
+        newProducts = productManager.getProducts();
+        socketServer.emit('update-products', newProducts);
+        socket.on('new-product', () => {
+            newProducts = productManager.getProducts();
             socketServer.emit('update-products', newProducts);
         });
     });

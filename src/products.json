@@ -176,24 +176,13 @@
         "stock": "200"
     },
     {
-        "id": "d83093a6-09ec-4091-9442-21da6c539a23",
-        "title": "Coso 2",
-        "category": "Bazaar",
-        "description": "Coso re kawaii, subarashii, increible, te va a hacer el mas querido del pueblo",
-        "price": "1000",
-        "status": true,
-        "thumbnail": "C:\\Users\\agust\\Desktop\\BackEnd\\public\\img\\ecbf771f-8f0e-4ef0-b2ce-f0dc10ec0170",
-        "code": "P013",
-        "stock": "10"
-    },
-    {
-        "id": "82fbe695-c3ed-459f-830a-296a484a8c42",
+        "id": "4b791a37-d9ff-472b-8230-372612ec49ca",
         "title": "Coso 3",
         "category": "Bazaar",
         "description": "Coso re kawaii, subarashii, increible, te va a hacer el mas querido del pueblo",
         "price": "600",
         "status": true,
-        "thumbnail": "C:\\Users\\agust\\Desktop\\BackEnd\\public\\img\\1702968f-6400-467a-b7cd-9909a7a61f28",
+        "thumbnail": "C:\\Users\\agust\\Desktop\\BackEnd\\public\\img\\29bb1375-f9ae-4b90-a77d-617e8972af71",
         "code": "P015",
         "stock": "10"
     }

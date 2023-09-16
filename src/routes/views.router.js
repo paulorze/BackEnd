@@ -2,17 +2,13 @@ import { Router } from "express";
 import { uploader } from "../utils.js";
 import { ProductManager } from "../ProductManager.js";
 import { NotFoundError, ServerError, ValidationError } from "../ErrorManager.js";
-// Esto es para poder mandar un delete desde un form?????
-import express from 'express';
-import methodOverride from 'method-override';
 
 const router = Router();
-const app = express();
 
 (async()=> {
     const productManager = new ProductManager({path: './products.json'});
     await productManager.init();
-    app.use(methodOverride('_method'));
+
     router.get('/', (req, res)=> {
         try {            
             res.render('index', {
@@ -64,8 +60,8 @@ const app = express();
         }
     });
 
-    router.delete('/realTimeProducts', async (req, res)=> {
-        const pid = req.body.pid;
+    router.delete('/realTimeProducts/:pid', async (req, res)=> {
+        const pid = req.params.pid;
         try {
             await productManager.deleteProduct(pid);
             res.render('realTimeProducts', {
@@ -76,11 +72,11 @@ const app = express();
 
         } catch (error) {
             switch (true) {
-                case (e instanceof NotFoundError):
-                    return res.status(404).send({status: "error", error: e.message});
+                case (error instanceof NotFoundError):
+                    return res.status(404).send({status: "error", error: error.message});
                     break;
                 case (e instanceof ServerError):
-                    return res.status(500).send({status: "error", error: e.message});
+                    return res.status(500).send({status: "error", error: error.message});
                     break;
             }
         };

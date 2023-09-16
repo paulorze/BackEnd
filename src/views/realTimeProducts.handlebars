@@ -2,7 +2,7 @@
     <h2>
         Registro de productos
     </h2>
-    <form action="/realTimeProducts" method="post" enctype="multipart/form-data">
+    <form onsubmit="emitter(event)" enctype="multipart/form-data">
         <label for="title">
             Nombre
         </label>
@@ -33,7 +33,6 @@
         <button
             type="submit"
             id="submitProduct"
-            onclick="emitter()"
         >
             Guardar Producto
         </button>
@@ -49,9 +48,8 @@
     <h2>
         Eliminar producto
     </h2>
-    <form action="/realTimeProducts?_method=DELETE" method="POST">
-        <input type="hidden" name="_method" value="DELETE">
-        <label for="title">
+    <form  onsubmit="onDelete(event)">
+        <label for="pid">
             ID
         </label>
         <input type="text" name="pid" id="pid" required>
@@ -73,7 +71,7 @@
     <h2>
         Lista de Productos
     </h2>
-    <ul>
+    {{!-- <ul>
         {{#each products}}
             <li>
                 <h2>
@@ -94,26 +92,9 @@
                 <img src={{this.thumbnail.[0]}} alt={{this.title}}>
             </li>
         {{/each}}
-    </ul>
+    </ul> --}}
     <ul id="newlyAddedProducts">
     </ul>
 </section>
 <script src="socket.io/socket.io.js"></script>
 <script src="js/index.js"></script>
-{{!-- <script>
-    const socket = io();
-
-    const emitter = () {
-        console.log('holis')
-        const newProduct = {
-            title : form.querySelector('#title').value,
-            description : form.querySelector('#description').value,
-            category : form.querySelector('#category').value,
-            price : form.querySelector('#price').value,
-            thumbnail : form.querySelector('#thumbnail').value,
-            code : form.querySelector('#code').value,
-            stock : form.querySelector('#stock').value
-        };
-        socket.emit('new-product', newProduct);
-    };
-</script> --}}
