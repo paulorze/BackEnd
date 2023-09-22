@@ -1,14 +1,10 @@
 import { Router } from "express";
 import { uploader } from "../utils.js";
-import { ProductManager } from "../ProductManager.js";
 import { NotFoundError, ServerError, ValidationError } from "../ErrorManager.js";
 
 const router = Router();
 
-(async()=> {
-    const productManager = new ProductManager({path: './products.json'});
-    await productManager.init();
-
+export default (productManager)=> {
     router.get('/', (req, res)=> {
         try {            
             res.render('index', {
@@ -43,11 +39,7 @@ const router = Router();
         };
         try {
             await productManager.addProduct({title: product.title, category: product.category, description: product.description, price:product.price, thumbnail: req.file.path, code: product.code, stock: product.stock});
-            res.render('realTimeProducts', {
-                title: "Real Time Products",
-                style: "realTimeProducts.css",
-                products: productManager.getProducts()
-            });
+            res.send({result: true});
         } catch (e) {
             switch (true) {
                 case (e instanceof ValidationError):
@@ -64,12 +56,7 @@ const router = Router();
         const pid = req.params.pid;
         try {
             await productManager.deleteProduct(pid);
-            res.render('realTimeProducts', {
-                title: "Real Time Products",
-                style: "realTimeProducts.css",
-                products: productManager.getProducts()
-            });
-
+            res.send({result: true});
         } catch (error) {
             switch (true) {
                 case (error instanceof NotFoundError):
@@ -81,8 +68,6 @@ const router = Router();
             }
         };
     });
-})();
 
-
-
-export default router;
+    return router
+};

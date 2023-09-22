@@ -20,6 +20,9 @@ app.use('/', express.static(path.join(__dirname, '..', 'public')));
     });
     const socketServer = new Server(httpServer);
 
+    const productManager = new ProductManager({path: './products.json'});
+    await productManager.init();
+
     app.use(express.json());
     app.use(express.urlencoded({extended:true}));
     app.use('/api/products', productsRouter);
@@ -28,11 +31,9 @@ app.use('/', express.static(path.join(__dirname, '..', 'public')));
     app.set('views', __dirname+'/views');
     app.set('view engine', 'handlebars');
     app.use(express.static(__handlebardirname));
-    app.use('/',viewsRouter);
+    app.use('/',viewsRouter(productManager));
     
     let newProducts =[];
-    const productManager = new ProductManager({path: './products.json'});
-    await productManager.init();
     socketServer.on('connection', socket=>{
         console.log("New Socket connection established (?)");
         newProducts = productManager.getProducts();
