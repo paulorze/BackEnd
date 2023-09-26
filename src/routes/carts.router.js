@@ -1,85 +1,123 @@
-import { Router } from "express";
+import {Router} from 'express';
+import Carts from '../dao/dbManagers/carts.manager.js';
+import {TypeError, ServerError, NotFoundError} from '../dao/dbManagers/errors.manager.js';
+
 const router = Router();
-import { ProductManager } from "../ProductManager.js";
-import { CartManager } from "../CartManager.js";
-import { NotFoundError, ServerError } from "../ErrorManager.js";
+const cartsManager = new Carts();
 
-(async()=>{
-    const productManager = new ProductManager({path: './products.json'});
-    await productManager.init();
-    const cartManager = new CartManager({path: './carts.json'});
-    await cartManager.init();
-
-    router.get('/', (req, res)=> {
-        const {limit} = req.query;
-        if (!limit) return res.send({status: "success", payload: cartManager.getCarts()});
+router.get('/', async(req, res) => {
+    const {limit} = req.query;
+    if (!limit) {
         try {
-            return res.send({status: "success", payload:cartManager.getCartsLimit(limit)});
-        } catch(error) {
-            return res.status(412).send({status: "error", error: error.message});
-        }
-    });
-
-    router.get('/:cid', (req, res)=> {
-        const cid = req.params.cid;
-        try {
-            return res.send({status: "success", payload:cartManager.getCartByID(cid)});
-        } catch (error) {
-            return res.status(404).send({status: "error", error: error.message});
-        }
-    });
-
-    router.post('/', async (req, res)=> {
-        const cart = req.body;
-        try {
-            await cartManager.saveCart({products: cart.products});
-            return res.send({status: "success", message: "Carrito agregado exitosamente."});
+            const carts = await cartsManager.getAll();
+            res.send({status: 'success', payload: carts});
         } catch (e) {
-            return res.status(500).send({status: "error", error: e.message});
-        }
-    });
+            res.status(500).send({status:'error', error: e.message})
+        };
+    };
+    try {
+        const carts = await cartsManager.getAllLimit(limit);
+        res.send({status: 'success', payload: carts});
+    } catch (e) {
+        switch (true) {
+            case (e instanceof TypeError):
+                res.status(412).send({status: 'error', error: e.message});
+                break;
+            case (e instanceof ServerError):
+                res.status(500).send({status: 'error', error: e.message});
+                break;
+            default:
+                res.status.send({status: 'error', error: e.message});
+        };
+    };
+});
 
-    router.post('/:cid/product/:pid', async (req, res)=> {
-        const cid = req.params.cid;
-        const pid = req.params.pid;
-        const quantity = req.body.quantity;
-        try {
-            productManager.getProductByID(pid);
-        } catch (error) {
-            return res.status(404).send({status: "error", error: error.message});
+router.get('/:cid', async (req, res) => {
+    const {cid} = req.params;
+    try {
+        const cart = await cartsManager.getByID(cid);
+        res.send({status: 'success', payload: cart});
+    } catch (e) {
+        switch (true) {
+            case (e instanceof NotFoundError):
+                res.status(404).send({status: 'error', error: e.message});
+                break;
+            case (e instanceof ServerError):
+                res.status(500).send({status: 'error', error: e.message});
+                break;
+            default:
+                res.status.send({status: 'error', error: e.message});
         };
-        if (!quantity) {
-            try {
-                await cartManager.addProductToCart(cid, pid, 1);
-                return res.send({status: "success", message: "Producto agregado al carrito exitosamente."});
-            } catch (error) {
-                return res.status(500).send({status: "error", error: error.message});
-            };
-        };
-        try {
-            await cartManager.addProductToCart(cid, pid, quantity);
-            return res.send({status: "success", message: "Producto agregado al carrito exitosamente."});
-        } catch (error) {
-            return res.status(500).send({status: "error", error: error.message});
-        };
-    });
+    };
+});
 
-    router.delete('/:cid', async (req, res)=> {
-        const cid = req.params.cid;
-        try {
-            await cartManager.deleteCart(cid);
-            return res.send({status: "success", message: "Carrito eliminado exitosamente."});
-        } catch (error) {
-            switch (true) {
-                case (e instanceof NotFoundError):
-                    return res.status(404).send({status: "error", error: e.message});
-                    break;
-                case (e instanceof ServerError):
-                    return res.status(500).send({status: "error", error: e.message});
-                    break;
-            }
+router.post('/', async (req, res) => {
+    const {products} = req.body;
+    const cart = {products: products ? products : []};
+    try {
+        const result = await cartsManager.addCart(cart);
+        res.status(201).send({status: 'success', payload: result});
+    } catch (e) {
+        res.status(500).send({status: 'error', error: e.message});
+    };
+});
+
+router.delete('/:cid', async (req,res)=>{
+    const {cid} = req.params;
+    try {
+        const result = await cartsManager.deleteCart(cid);
+        res.status(201).send({status: 'success', payload: result});
+    } catch (e) {
+        res.status(500).send({status: 'error', error: e.message});
+    };
+});
+
+router.put('/:cid', async (req, res)=>{
+    const {pid, quantity} = req.body;
+    const {cid} = req.params;
+    if (!pid.trim() || !quantity.trim()){
+        res.status(400).send({status: 'error', error: 'Por favor, ingrese todos los parametros necesarios (ID del producto y Cantidad)'});
+    };
+    try {
+        const result = await cartsManager.addCartProduct(cid, pid, quantity);
+        res.status(201).send({status: 'success', payload: result});
+    } catch (e) {
+        switch (true) {
+            case (e instanceof NotFoundError):
+                res.status(400).send({status: 'error', error: e.message});
+                break;
+            case (e instanceof ValidationError):
+                res.status(412).send({status: 'error', error: e.message});
+                break;
+            case (e instanceof ServerError):
+                res.status(500).send({status: 'error', error: e.message});
+                break;
+            default:
+                res.status.send({status: 'error', error: e.message});
         };
-    });
-})();
+    };
+});
+
+router.delete('/deleteproductcart/:cid&:pid', async (req, res) =>{
+    const {cid, pid} = req.params;
+    if (!cid || !pid) {
+        res.status(400).send({status: 'error', error: 'Por favor, ingrese todos los parametros necesarios(ID del carrito e ID del producto)'});
+    }; //ESTO NO HACE FALTA, VERDAD?
+    try {
+        const result = await cartsManager.deleteCartProduct(cid, pid);
+        res.status(200).send({status: 'success', payload: result});
+    } catch (e) {
+        switch (true) {
+            case (e instanceof NotFoundError):
+                res.status(400).send({status: 'error', error: e.message});
+                break;
+            case (e instanceof ServerError):
+                res.status(500).send({status: 'error', error: e.message});
+                break;
+            default:
+                res.status.send({status: 'error', error: e.message});
+        };
+    };
+});
 
 export default router;

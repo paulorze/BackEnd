@@ -1,101 +1,105 @@
-import { Router } from "express";
-import { uploader } from "../utils.js";
-import { ProductManager } from "../ProductManager.js";
-import { NotFoundError, ServerError, ValidationError } from "../ErrorManager.js";
+import {Router} from 'express';
+import Products from '../dao/dbManagers/products.manager.js';
+import {TypeError, ServerError, NotFoundError, ValidationError} from '../dao/dbManagers/errors.manager.js';
 
 const router = Router();
+const productsManager = new Products();
 
-(async()=> {
-    const productManager = new ProductManager({path: './products.json'});
-    await productManager.init();
-
-    router.get('/', (req, res)=> {
-        const {limit} = req.query;
-        if (!limit ) {
-            try {
-                return res.send({status: "success", payload: productManager.getProducts()});
-            } catch (error) {
-                return res.status(412).send({status: "error", error: error.message});
-            }
-        }
+router.get('/', async(req, res) => {
+    const {limit} = req.query;
+    if (!limit) {
         try {
-            return res.send({status: "success", payload: productManager.getProductsLimit(limit)});
-        } catch (error) {
-            return res.status(412).send({status: "error", error: error.message});
-        }
-    });
-    
-    router.get('/:pid', (req, res)=> {
-        const pid = req.params.pid;
-        try {
-            return res.send({status: "success", payload: productManager.getProductByID(pid)});
-        } catch (error) {
-            return res.status(404).send({status: "error", error: error.message});
-        }
-    });
-
-    router.post('/', uploader.single('thumbnail'), async (req, res)=> {
-        if (!req.file) {
-            return res.status(428).send({status: 'error', error: 'Por favor, elija una imagen de formato valido.'})
-        }
-        const product = req.body;
-        if (!product.title || !product.category || !product.description || !product.price || !product.code || !product.stock) {
-            return res.status(428).send({status: "error", error: "Por favor, ingrese todos los datos necesarios del producto (titulo, descripcion, precio, miniatura, codigo, stock)."});
-        };
-        try {
-            await productManager.addProduct({title: product.title, category: product.category, description: product.description, price:product.price, thumbnail: req.file.path, code: product.code, stock: product.stock});
-            return res.send({status: "success", message: "Producto agregado exitosamente."});
+            const products = await productsManager.getAll();
+            res.send({status: 'success', payload: products});
         } catch (e) {
-            switch (true) {
-                case (e instanceof ValidationError):
-                    return res.status(412).send({status: "error", error: e.message});
-                    break;
-                case (e instanceof ServerError):
-                    return res.status(500).send({status: "error", error: e.message});
-                    break;
-            }
-        }
-    });
-
-    router.put('/:pid', async (req, res)=> {
-        const pid = req.params.pid;
-        let paramsToUpdate = req.body;
-        try {
-            await productManager.updateProduct(pid, paramsToUpdate);
-            return res.send({status: "success", message: "Producto actualizado exitosamente."});
-        } catch (error) {
-            switch (true) {
-                case (e instanceof NotFoundError):
-                    return res.status(404).send({status: "error", error: e.message});
-                    break;
-                case (e instanceof ValidationError):
-                    return res.status(412).send({status: "error", error: e.message});
-                    break;
-                case (e instanceof ServerError):
-                    return res.status(500).send({status: "error", error: e.message});
-                    break;
-            }
+            res.status(500).send({status:'error', error: e.message})
         };
-    });
-
-    router.delete('/:pid', async (req, res)=> {
-        const pid = req.params.pid;
-        try {
-            await productManager.deleteProduct(pid);
-            return res.send({status: "success", message: "Producto eliminado exitosamente."});
-        } catch (error) {
-            switch (true) {
-                case (e instanceof NotFoundError):
-                    return res.status(404).send({status: "error", error: e.message});
-                    break;
-                case (e instanceof ServerError):
-                    return res.status(500).send({status: "error", error: e.message});
-                    break;
-            }
+    };
+    try {
+        const products = await productsManager.getAllLimit(limit);
+        res.send({status: 'success', payload: products});
+    } catch (e) {
+        switch (true) {
+            case (e instanceof TypeError):
+                res.status(412).send({status: 'error', error: e.message});
+                break;
+            case (e instanceof ServerError):
+                res.status(500).send({status: 'error', error: e.message});
+                break;
+            default:
+                res.status(400).send({status: 'error', error: e.message});
         };
-    });
-})();
+    };
+});
 
+router.get('/:pid', async (req, res) => {
+    const {pid} = req.params;
+    try {
+        const product = await productsManager.getByID(pid);
+        res.send({status: 'success', payload: product});
+    } catch (e) {
+        switch (true) {
+            case (e instanceof NotFoundError):
+                res.status(404).send({status: 'error', error: e.message});
+                break;
+            case (e instanceof ServerError):
+                res.status(500).send({status: 'error', error: e.message});
+                break;
+            default:
+                res.status(400).send({status: 'error', error: e.message});
+        };
+    };
+});
 
+router.post('/', async (req, res) => {
+    const {title, category, description, code, price, stock, thumbnail} = req.body;
+    if (!title || !category || !description || !code || !price || !stock) res.status(400).send({status: 'error', error: 'Por favor, ingrese todos los parametros necesarios (title, category, description, code, price, stock, thumbnail)'});
+    const product = {
+        title,
+        category,
+        description,
+        code,
+        price,
+        stock,
+        thumbnail: thumbnail ? thumbnail : []
+    };
+    try {
+        const result = await productsManager.addProduct(product);
+        res.status(201).send({status: 'success', payload: result});
+    } catch (e) {
+        switch (true) {
+            case (e instanceof ValidationError):
+                res.status(412).send({status: 'error', error: e.message});
+                break;
+            case (e instanceof ServerError):
+                res.status(500).send({status: 'error', error: e.message});
+                break;
+            default:
+                res.status.send({status: 'error', error: e.message});
+        };    
+    };
+});
+
+router.put('/:pid', async (req, res)=>{
+    const {pid} = req.params;
+    const {title, category, description, code, price, stock, thumbnail} = req.body;
+    const data = {title, category, description, code, price, stock, thumbnail};
+    try {
+        const result = await productsManager.updateProduct(pid, data);
+        res.status(201).send({status: 'success', payload: result});
+    } catch (e) {
+        res.status(500).send({status: 'error', error: e.message});
+    };
+});
+
+router.delete('/:pid', async (req,res)=>{
+    const {pid} = req.params;
+    try {
+        const result = await productsManager.deleteProduct(pid);
+        res.status(201).send({status: 'success', payload: result});
+    } catch (e) {
+        res.status(500).send({status: 'error', error: e.message});
+    };
+});
 
 export default router;

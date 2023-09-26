@@ -1,0 +1,20 @@
+<main>
+    <h1>
+        Chat
+    </h1>
+    <section>
+        {{#each messages}}
+            <div class="message">
+                <h3>
+                    {{this._id}}
+                </h3>
+                <h3>
+                    {{this.user}}
+                </h3>
+                <p>
+                    {{this.message}}
+                </p>
+            </div>
+        {{/each}}
+    </section>
+</main>

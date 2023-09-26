@@ -1,0 +1,32 @@
+<main>
+    <h1>
+        Productos
+    </h1>
+    <section>
+        <ul>            
+            {{#each products}}
+                <li class="product">
+                    <h2>
+                        {{this.title}}
+                    </h2>
+                    <h4>
+                        {{this.category}}
+                    </h4>
+                    <h4>
+                        {{this.code}}
+                    </h4>
+                    <p>
+                        {{this.description}}
+                    </p>
+                    <h3>
+                        {{this.price}}
+                    </h3>
+                    <h3>
+                        {{this.code}}
+                    </h3>
+                    <img src="{{this.thumbnail.[0]}}" alt="{{this.title}}">
+                </li>
+            {{/each}}
+        </ul>
+    </section>
+</main>
