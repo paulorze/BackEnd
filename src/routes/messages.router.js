@@ -7,16 +7,13 @@ const messagesManager = new Messages();
 
 router.get('/', async (req, res)=>{
     const {limit} = req.query;
-    if (!limit) {
-        try {
-            const messages = await messagesManager.getAll();
-            res.send({status: 'success', payload: messages});
-        } catch (e) {
-            res.status(500).send({status:'error', error: e.message})
-        };
-    };
+    const messages = [];
     try {
-        const messages = await messagesManager.getAllLimit(limit);
+        if (limit) {
+            messages = await messagesManager.getAllLimit(limit);
+        }else{
+            messages = await messagesManager.getAll();
+        };
         res.send({status: 'success', payload: messages});
     } catch (e) {
         switch (true) {
@@ -53,7 +50,7 @@ router.get('/:mid', async (req, res)=> {
 
 router.post('/', async (req, res)=>{
     const {user, message} = req.body;
-    if (!user || !message) res.status(400).send({status: 'error', error: 'El nombre de usuario y el cuerpo del mensaje son obligatorios.'});
+    if (!user || !message) return res.status(400).send({status: 'error', error: 'El nombre de usuario y el cuerpo del mensaje son obligatorios.'});
     const newMessage = {user, message};
     try {
         const result = await messagesManager.addMessage(newMessage);

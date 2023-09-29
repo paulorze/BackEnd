@@ -31,7 +31,7 @@ export default class Products {
     getByID = async(id)=> {
         try {
             const product = await productsModel.find({_id: id}).lean();
-            if (!productFound) {
+            if (!product) {
                 throw new NotFoundError(`404 NOT FOUND: El producto con ID ${id} no existe.`)
             };
             return product;
@@ -41,17 +41,21 @@ export default class Products {
     };
 
     addProduct = async (product)=> {
-        this.validateTitle(product.title);
-        this.validateCategory(product.category);
-        this.validateDescription(product.description);
-        this.validateNumber(product.price, 'price');
-        this.validateCode(product.code);
-        this.validateNumber(product.stock, 'stock');
         try {
+            this.validateTitle(product.title);
+            this.validateCategory(product.category);
+            this.validateDescription(product.description);
+            this.validateNumber(product.price, 'price');
+            this.validateCode(product.code);
+            this.validateNumber(product.stock, 'stock');
             const result = await productsModel.create(product);
             return result;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al guardar el producto.');
+        } catch (e) {
+            if (e instanceof ValidationError){
+                throw new ValidationError (e.message);
+            } else{
+                throw new ServerError ('500 INTERNAL SERVER ERROR: Error al guardar el producto.');
+            };
         };
     };
     
@@ -60,39 +64,43 @@ export default class Products {
         for (const [key, value] of Object.entries(data)) {
             if (!validKeys.includes(key)) throw new TypeError ('Por favor, ingrese solamente parametros validos (title, category, description, price, thumbnail, code, stock).');
         };
-        for (const [key, value] of Object.entries(data)) {
-            switch (key) {
-                case 'title':
-                    this.validateTitle(value);
-                    foundProduct[key] = value;
-                    break;
-                case 'category':
-                    this.validateCategory(value);
-                    foundProduct[key] = value;
-                    break;
-                case 'description':
-                    this.validateDescription(value);
-                    foundProduct[key] = value;
-                    break;
-                case 'price':
-                    this.validateNumber(value, 'price');
-                    foundProduct[key] = value;
-                    break;
-                case 'code':
-                    this.validateCode(value);
-                    foundProduct[key] = value;
-                    break;
-                case 'stock':
-                    this.validateNumber(value, 'stock');
-                    foundProduct[key] = value;
-                    break;
-            };
-        };
         try {
+            for (const [key, value] of Object.entries(data)) {
+                switch (key) {
+                    case 'title':
+                        this.validateTitle(value);
+                        foundProduct[key] = value;
+                        break;
+                    case 'category':
+                        this.validateCategory(value);
+                        foundProduct[key] = value;
+                        break;
+                    case 'description':
+                        this.validateDescription(value);
+                        foundProduct[key] = value;
+                        break;
+                    case 'price':
+                        this.validateNumber(value, 'price');
+                        foundProduct[key] = value;
+                        break;
+                    case 'code':
+                        this.validateCode(value);
+                        foundProduct[key] = value;
+                        break;
+                    case 'stock':
+                        this.validateNumber(value, 'stock');
+                        foundProduct[key] = value;
+                        break;
+                };
+            };
             const result = await productsModel.updateOne({_id: id}, foundProduct);
             return result;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al actualizar el producto (asegurese que no existe el Codigo del Producto en la base de datos).');
+        } catch (e) {
+            if (e instanceof ValidationError){
+                throw new ValidationError (e.message);
+            } else{
+                throw new ServerError ('500 INTERNAL SERVER ERROR: Error al guardar el producto.');
+            };        
         };
     };
 

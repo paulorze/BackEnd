@@ -7,16 +7,13 @@ const cartsManager = new Carts();
 
 router.get('/', async(req, res) => {
     const {limit} = req.query;
-    if (!limit) {
-        try {
-            const carts = await cartsManager.getAll();
-            res.send({status: 'success', payload: carts});
-        } catch (e) {
-            res.status(500).send({status:'error', error: e.message})
-        };
-    };
+    const carts = [];
     try {
-        const carts = await cartsManager.getAllLimit(limit);
+        if (limit) {
+            carts = await cartsManager.getAllLimit(limit);
+        } else {
+            carts = await cartsManager.getAll();
+        };
         res.send({status: 'success', payload: carts});
     } catch (e) {
         switch (true) {

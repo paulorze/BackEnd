@@ -7,16 +7,13 @@ const productsManager = new Products();
 
 router.get('/', async(req, res) => {
     const {limit} = req.query;
-    if (!limit) {
-        try {
-            const products = await productsManager.getAll();
-            res.send({status: 'success', payload: products});
-        } catch (e) {
-            res.status(500).send({status:'error', error: e.message})
-        };
-    };
+    const products = [];
     try {
-        const products = await productsManager.getAllLimit(limit);
+        if (limit) {
+            products = await productsManager.getAllLimit(limit);
+        } else {
+            products = await productsManager.getAll();
+        };
         res.send({status: 'success', payload: products});
     } catch (e) {
         switch (true) {
