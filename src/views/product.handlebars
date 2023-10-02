@@ -1,15 +1,11 @@
 <main>
-    <h1>
-        Productos
-    </h1>
-    <section>
-        <ul>            
-            {{#each products}}
+    {{#each product}}
+        <h1>
+            {{this.title}}
+        </h1>
+        <section>
+            <ul>            
                 <li class="product">
-                    <a href="/product/{{this._id}}">
-                        <h2>
-                            {{this.title}}
-                        </h2>
                         <h4>
                             Categoria: {{this.category}}
                         </h4>
@@ -25,7 +21,6 @@
                         <h3>
                             Stock: {{this.stock}}
                         </h3>
-                    </a>
                     <img src="{{this.thumbnail.[0]}}" alt="{{this.title}}">
                     <form action="">
                         <select name="quantity" id="quantity">
@@ -43,17 +38,7 @@
                         <button>Agregar al Carrito</button>
                     </form>
                 </li>
-            {{/each}}
-        </ul>
-        {{#if hasPrevPage}}
-        <a href="/view-products?page={{prevPage}}">
-            <button class="pagebtn">{{prevPage}}</button>
-        </a>
-        {{/if}}
-        {{#if hasNextPage}}
-        <a href="/view-products?page={{nextPage}}">
-            <button class="pagebtn">{{nextPage}}</button>
-        </a>
-        {{/if}}
-    </section>
+            </ul>
+        </section>
+    {{/each}}
 </main>

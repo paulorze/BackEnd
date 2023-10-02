@@ -1,21 +1,39 @@
 <main>
-    <h1>
-        Carritos
-    </h1>
-    <section>
-        {{#each carts}}
-            <div class="cartContainer">
-                <h3>
-                    {{this._id}}
-                </h3>
-                <ul>
-                    {{#each this.products}}
-                        <li>
-                            <strong>{{this._id}}</strong> Cantidad:{{this.quantity}}
-                        </li>
-                    {{/each}}
-                </ul>
-            </div>
-        {{/each}}
-    </section>
+    {{#each cart}}
+        <h1>
+            Carrito {{this._id}}
+        </h1>
+        <section>
+            <ul>
+                {{#each this.products}}
+                    <li class="product">
+                        <a href="">
+                            <h2>
+                                {{this.pid.title}}
+                            </h2>
+                            <h4>
+                                Categoria: {{this.pid.category}}
+                            </h4>
+                            <h4>
+                                Codigo: {{this.pid.code}}
+                            </h4>
+                            <p>
+                                {{this.pid.description}}
+                            </p>
+                            <h3>
+                                $ {{this.pid.price}}
+                            </h3>
+                            <h3>
+                                Stock: {{this.pid.stock}}
+                            </h3>
+                        </a>
+                        <img src="{{this.pid.thumbnail.[0]}}" alt="{{this.pid.title}}">
+                        <h2>
+                            Quantity: {{this.quantity}}
+                        </h2>
+                    </li>
+                {{/each}}
+            </ul>
+        </section>
+    {{/each}}
 </main>

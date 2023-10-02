@@ -1,6 +1,7 @@
 import express from 'express';
 import handlebars from 'express-handlebars';
 import mongoose from 'mongoose';
+import path from 'path';
 import __dirname from './utils.js';
 import viewsRouter from './routes/views.router.js';
 import cartsRouter from './routes/carts.router.js';
@@ -8,6 +9,9 @@ import messagesRouter from './routes/messages.router.js';
 import productsRouter from './routes/products.router.js';
 
 const app = express();
+const __handlebardirname = __dirname+"/public";// Estas tres lineas son para poder usar el css de manera dinamica
+app.use('/', express.static(path.join(__dirname, '..', 'public')));//
+app.use(express.static(__handlebardirname)); //
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));

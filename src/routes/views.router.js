@@ -1,21 +1,21 @@
 import {Router} from 'express';
 import Carts from '../dao/dbManagers/carts.manager.js';
 import Messages from '../dao/dbManagers/messages.manager.js';
-import Products from '../dao/dbManagers/products.manager.js';
+import { productsModel } from '../dao/models/products.model.js';
 
 const router = Router();
 
 const cartsManager = new Carts();
 const messagesManager = new Messages();
-const productsManager = new Products()
 
-router.get('/view-carts', async(req, res) => {
+router.get('/view-cart/:cid', async(req, res) => {
+    const {cid} = req.params;
     try {
-        const carts = await cartsManager.getAll();
+        const cart = await cartsManager.getByID(cid);
         res.render('carts', {
-            title: "Carritos",
+            title: "Carrito",
             style:'index.css',
-            carts: carts});
+            cart: cart});
     } catch (e) {
         res.status(500).send({status:'error', error: e.message})
     };
@@ -34,14 +34,42 @@ router.get('/view-messages', async (req, res)=>{
 });
 
 router.get('/view-products', async(req, res) => {
+    const {limit = 10, page = 1, key, value, sort} = req.query;
+    //Este primer if es medio innecesario salvo para orientar al usuario
+    if ((key && !value) || (!key && value) || (key != 'category' && key != 'stock' && key != null)) return res.status(400).send({status: "error", error: "Por favor, ingrese un patrón de búsqueda válido."});
+    if (sort && (sort != 1 && sort != -1)) return res.status(400).send({status: "error", error: "Por favor, ingrese una manera de ordenar válida."});
+    const search = key && value ? {[key] : value} : {};
+    const sortObj = sort ? {price : parseInt(sort)} : {};
     try {
-        const products = await productsManager.getAll();
+        const {docs, totalPages, hasPrevPage, hasNextPage, nextPage, prevPage} = await productsModel.paginate(search, {limit, page, lean: true, sort: sortObj});
         res.render('products', {
             title: "Productos",
             style:'index.css',
-            products: products});
+            products: docs,
+            totalPages,
+            hasPrevPage,
+            hasNextPage,
+            nextPage,
+            prevPage
+            //nextLink y prevLink no son objetos que retorne el paginate. page rompe la carga de la pagina
+        });
     } catch (e) {
-        res.status(500).send({status:'error', error: e.message})
+        return res.status(500).send({status:'error', error: e.message});
+    };
+});
+
+router.get('/product/:pid', async(req, res)=>{
+    const {pid} = req.params;
+    try {
+        const {docs} = await productsModel.paginate({_id: pid}, {lean: true});
+        console.log(docs)
+        res.render('product', {
+            title: "Producto",
+            style:'index.css',
+            product: docs
+        });
+    } catch (e) {
+        return res.status(500).send({status:'error', error: e.message});
     };
 });
 

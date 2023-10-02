@@ -87,4 +87,16 @@ export default class Carts {
             throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
         };
     };
+
+    addCartProductsArray = async(cid, products) => {
+        //Aca se podria verificar si cada producto es de id valido y cantidad valida, pero creo que habria que crear una nueva instancia de productsManager y no se si sea conveniente
+        const cart = await this.getByID(cid);
+        cart.products = products;
+        try {
+            const result = await cartsModel.updateOne({_id: cid}, cart);
+            return result;
+        } catch{
+            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
+        };
+    }
 };
