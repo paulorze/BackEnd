@@ -62,7 +62,6 @@ router.get('/product/:pid', async(req, res)=>{
     const {pid} = req.params;
     try {
         const {docs} = await productsModel.paginate({_id: pid}, {lean: true});
-        console.log(docs)
         res.render('product', {
             title: "Producto",
             style:'index.css',

@@ -7,7 +7,7 @@ const productsManager = new Products();
 
 router.get('/', async(req, res) => {
     const {limit} = req.query;
-    const products = [];
+    let products = [];
     try {
         if (limit) {
             products = await productsManager.getAllLimit(limit);

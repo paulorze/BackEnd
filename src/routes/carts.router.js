@@ -92,7 +92,7 @@ router.put('/:cid', async (req, res)=>{
 router.put('/:cid/products/:pid', async (req, res)=>{
     const {cid, pid} = req.params;
     const {quantity} = req.body;
-    if (!pid.trim() || !quantity.trim()){
+    if (!pid || !quantity){
         res.status(400).send({status: 'error', error: 'Por favor, ingrese todos los parametros necesarios (ID del producto y Cantidad)'});
     };
     try {
