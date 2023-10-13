@@ -8,7 +8,38 @@ const router = Router();
 const cartsManager = new Carts();
 const messagesManager = new Messages();
 
-router.get('/view-cart/:cid', async(req, res) => {
+const publicAccess = (req, res, next) => {
+    if (req.session.user) return res.redirect('/user-profile');
+    next();
+};
+
+const privateAccess = (req, res, next) => {
+    if (!req.session.user) return res.redirect('/');
+    next();
+};
+
+router.get('/', publicAccess, (req, res)=>{
+    res.render('login', {
+        style:'styles.css'
+    });
+});
+
+router.get('/signup', publicAccess, (req, res)=>{
+    res.render('signup', {
+        style:'styles.css'
+    });
+});
+
+router.get('/user-profile', privateAccess, (req, res)=>{
+    let user = req.session.user;
+    console.log(user)
+    res.render('userprofile', {
+        style:'styles.css',
+        user
+    });
+});
+
+router.get('/view-cart/:cid', privateAccess, async(req, res) => {
     const {cid} = req.params;
     try {
         const cart = await cartsManager.getByID(cid);
@@ -21,7 +52,7 @@ router.get('/view-cart/:cid', async(req, res) => {
     };
 });
 
-router.get('/view-messages', async (req, res)=>{
+router.get('/view-messages', privateAccess, async (req, res)=>{
     try {
         const messages = await messagesManager.getAll();
         res.render('chat', {
@@ -40,11 +71,13 @@ router.get('/view-products', async(req, res) => {
     if (sort && (sort != 1 && sort != -1)) return res.status(400).send({status: "error", error: "Por favor, ingrese una manera de ordenar válida."});
     const search = key && value ? {[key] : value} : {};
     const sortObj = sort ? {price : parseInt(sort)} : {};
+    const user = req.session.user ? req.session.user : null;
     try {
         const {docs, totalPages, hasPrevPage, hasNextPage, nextPage, prevPage} = await productsModel.paginate(search, {limit, page, lean: true, sort: sortObj});
         res.render('products', {
             title: "Productos",
             style:'index.css',
+            user,
             products: docs,
             totalPages,
             hasPrevPage,
@@ -62,10 +95,11 @@ router.get('/product/:pid', async(req, res)=>{
     const {pid} = req.params;
     try {
         const {docs} = await productsModel.paginate({_id: pid}, {lean: true});
-        console.log(docs)
+        const user = req.session.user ? req.session.user : null;
         res.render('product', {
             title: "Producto",
             style:'index.css',
+            user,
             product: docs
         });
     } catch (e) {

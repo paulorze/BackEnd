@@ -1,4 +1,14 @@
 <main>
+    {{#if user}}
+        <h1>
+            Bienvenid@ de nuevo, {{user.username}}
+        </h1>
+        <a href="/api/sessions/logout">
+            <button>
+                Cerrar Sesion
+            </button>
+        </a>
+    {{/if}}
     {{#each product}}
         <h1>
             {{this.title}}

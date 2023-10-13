@@ -1,0 +1,48 @@
+<main>
+    <h1>Bienvenid@ de nuevo, {{user.username}}</h1>
+    <a href="/view-products">
+        <button>
+            Productos
+        </button>
+    </a>
+    <section>
+        <h2>
+            Tus datos son:
+        </h2>
+        <dl>
+            <dt>
+                Nombre y Apellido
+            </dt>
+            <dd>
+                {{user.name}}
+            </dd>
+            <dt>
+                Email
+            </dt>
+            <dd>
+                {{user.email}}
+            </dd>
+            <dt>
+                Edad
+            </dt>
+            <dd>
+                {{user.age}}
+            </dd>
+            <dt>
+                Rol
+            </dt>
+            <dd>
+                {{#if user.isAdmin}} 
+                    Administrador
+                {{else}}
+                    Usuario
+                {{/if}}
+            </dd>
+        </dl>
+        <a href="/api/sessions/logout">
+            <button>
+                Cerrar Sesion
+            </button>
+        </a>
+    </section>
+</main>

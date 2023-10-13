@@ -1,0 +1,24 @@
+section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+input, label {
+    width: 300px;
+    margin: 1rem auto;
+}
+
+button {
+    margin: 1rem auto;
+}
