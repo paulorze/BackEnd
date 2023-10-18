@@ -24,15 +24,14 @@ router.get('/', publicAccess, (req, res)=>{
     });
 });
 
-router.get('/signup', publicAccess, (req, res)=>{
-    res.render('signup', {
+router.get('/register', publicAccess, (req, res)=>{
+    res.render('register', {
         style:'styles.css'
     });
 });
 
 router.get('/user-profile', privateAccess, (req, res)=>{
     let user = req.session.user;
-    console.log(user)
     res.render('userprofile', {
         style:'styles.css',
         user

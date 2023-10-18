@@ -4,7 +4,6 @@ import { validCategories, validKeys } from "./validCategories.manager.js";
 
 export default class Products {
     constructor() {
-        console.log('Products');
     };
 
     getAll = async() => {

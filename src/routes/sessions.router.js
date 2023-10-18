@@ -1,51 +1,39 @@
 import { Router } from 'express';
-import { usersModel } from '../dao/models/users.model.js';
+import passport from 'passport';
 
 const router = Router();
 
-router.post('/signup', async (req, res)=> {
-    try {
-        const {username, first_name, last_name, email, age, password, password2 } = req.body;
-        if (password !== password2) {
-            return res.status(406).send({status:'error', message: 'Por favor, verifique que ambas contraseñas sean iguales.'})
-        };
-        const exists_username = await usersModel.findOne({username});
-        const exists_email = await usersModel.findOne({email});
-        if (exists_username || exists_email) {
-            return res.status(400).send({ status: 'error', message: 'El usuario o el email ingresados ya existen.'});
-        }
-        await usersModel.create({
-            username,
-            first_name,
-            last_name,
-            email,
-            age,
-            password
-        });
-        return res.status(201).send({status: 'success', message: 'Usuario registrado.'});
-    } catch (e) {
-        res.status(500).send({status: 'error', message: e.message});
-    }
+router.post('/register', passport.authenticate('register', {failureRedirect: 'fail-register'}), async (req, res)=> {
+    res.send({status: 'success', message: 'Usuario registrado satisfactoriamente.'})
 });
 
-router.post('/login', async (req, res) =>{
-    try {
-        const {email, password} = req.body;
-        const user = await usersModel.findOne({email, password});
-        if (!user) {
-            return res.status(400).send({status: 'error', message: 'Email o contraseña inválidos.'})
-        };
-        req.session.user = {
-            username: user.username,
-            name: `${user.first_name} ${user.last_name}`,
-            email: user.email,
-            age: user.age,
-            isAdmin: user.role === 'admin' //calculo que para que esto sea mas seguro, se puede cambiar 'admin' por una contrasenia segura y que sea variable de entorno
-        };
-        res.status(200).send({status: 'success', message: 'Inicio de sesion exitoso'});
-    } catch (e) {
-        return res.status(500).send({status: 'error', message: e.message});
-    }
+router.get('/fail-register', async (req, res) => {
+    res.status(500).send({status: 'error', message: 'Falló el registro.'})
+});
+
+router.post('/login', passport.authenticate('login', {failureRedirect: 'fail-login'}), async (req, res) =>{
+    if (!req.user) return res.status(401).send({status: 'error', message: 'Credenciales incorrectas.'});
+    req.session.user = {
+        username: req.user.username,
+        name: `${req.user.first_name} ${req.user.last_name}`,
+        email: req.user.email,
+        age: req.user.age,
+        isAdmin: req.user.role === 'admin' //calculo que para que esto sea mas seguro, se puede cambiar 'admin' por una contrasenia segura y que sea variable de entorno
+    };
+    res.status(200).send({status: 'success', message: 'Inicio de sesión exitoso'});
+});
+
+router.get('/fail-login', async (req, res) => {
+res.status(500).send({status: 'error', message: 'Falló el inicio de sesión.'});
+});
+
+router.get('/github', passport.authenticate('github', {scope: ['user:email']}), async (req, res) => {
+    res.send({status: 'success', message: 'user registered'});
+});
+
+router.get('/github-callback', passport.authenticate('github', {failureRedirect: '/login'}), async (req, res) => {
+    req.session.user = req.user;
+    res.redirect('/user-profile');
 });
 
 router.get('/logout', (req, res)=>{

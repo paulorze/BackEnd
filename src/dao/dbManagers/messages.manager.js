@@ -3,7 +3,6 @@ import { ServerError } from "./errors.manager.js    ";
 
 export default class Messages {
     constructor() {
-        console.log('Messages');
     };
 
     getAll = async() => {

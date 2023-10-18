@@ -3,7 +3,6 @@ import { ServerError, NotFoundError, ValidationError } from "./errors.manager.js
 
 export default class Carts {
     constructor () {
-        console.log('Carts');
     };
 
     getAll = async() => {
