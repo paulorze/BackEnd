@@ -2,6 +2,7 @@ const form = document.getElementById('loginForm');
 
 form.addEventListener('submit', e=>{
     e.preventDefault();
+    console.log('hola')
     const data = new FormData(form);
     const obj = {};
     data.forEach((value, key) => obj[key] = value);
@@ -14,6 +15,8 @@ form.addEventListener('submit', e=>{
     }).then(result => {
         if (result.status === 200) {
             window.location.replace('/')
-        };
+        } else {
+            console.log('cabio')
+        }
     });
 });

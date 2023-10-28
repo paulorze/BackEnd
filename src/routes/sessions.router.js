@@ -1,46 +1,79 @@
-import { Router } from 'express';
-import passport from 'passport';
+import passport from "passport";
+import Router from "./router.js";
+import Users from "../dao/dbManagers/users.manager.js";
+import { accessRolesEnum, passportStrategiesEnum } from "../config/enums.js";
+import { createHash, generateToken, isValidPassword } from "../utils.js";
 
-const router = Router();
 
-router.post('/register', passport.authenticate('register', {failureRedirect: 'fail-register'}), async (req, res)=> {
-    res.send({status: 'success', message: 'Usuario registrado satisfactoriamente.'})
-});
+export default class SessionsRouter extends Router {
+    constructor(){
+        super();
+        this.usersManager = new Users();
+    }
 
-router.get('/fail-register', async (req, res) => {
-    res.status(500).send({status: 'error', message: 'Falló el registro.'})
-});
+    init() {
+        this.post('/login', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.login);
+        this.post('/register', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.register);
+        this.get('/github', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.github);
+        this.get('/github-callback', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.githubCallback);
+        this.get('/logout', [accessRolesEnum.USER], passportStrategiesEnum.JWT, this.logout);
+    }
 
-router.post('/login', passport.authenticate('login', {failureRedirect: 'fail-login'}), async (req, res) =>{
-    if (!req.user) return res.status(401).send({status: 'error', message: 'Credenciales incorrectas.'});
-    req.session.user = {
-        username: req.user.username,
-        name: `${req.user.first_name} ${req.user.last_name}`,
-        email: req.user.email,
-        age: req.user.age,
-        isAdmin: req.user.role === 'admin' //calculo que para que esto sea mas seguro, se puede cambiar 'admin' por una contrasenia segura y que sea variable de entorno
+    async login (req, res) {
+        console.log("hola desde sessions.router");
+        const {email, password} = req.body;
+        try {
+            const user = await this.usersManager.getByEmail(email);
+            if (!user) return res.sendClientError('Credenciales incorrectas. Falló el inicio de sesión.');
+            const comparePassword = isValidPassword(password, user.password);
+            if (!comparePassword) return res.sendClientError('Credenciales incorrectas. Falló el inicio de sesión.');
+            delete user.password;
+            const accessToken = generateToken(user);
+            res.sendSuccess({ accessToken });
+        } catch (e) {
+            res.sendServerError(e.message);
+        };
     };
-    res.status(200).send({status: 'success', message: 'Inicio de sesión exitoso'});
-});
 
-router.get('/fail-login', async (req, res) => {
-res.status(500).send({status: 'error', message: 'Falló el inicio de sesión.'});
-});
+    async register (req, res) {
+        const { username, first_name, last_name, age, email, password, role } = req.body;
+        try {
+            if (!username || !first_name || !last_name || !age || !email || !password || !role)
+                return res.sendClientError("Valores incompletos. Falló el registro.");
+            const exists = await this.usersManager.getByEmail(email);
+            if (exists) return res.sendClientError("El mail ingresado ya fue utilizado. Falló el registro.");
+            const hashedPassword = createHash(password);
+            const newUser = {...req.body};
+            if (role !== accessRolesEnum.ADMIN) newUser.role = accessRolesEnum.USER;
+            newUser.password = hashedPassword;
+            const result = await this.usersManager.createUser(newUser);
+            res.sendSuccess(result);
+        } catch (e) {
+            res.sendServerError(error.message);
+        };
+    };
 
-router.get('/github', passport.authenticate('github', {scope: ['user:email']}), async (req, res) => {
-    res.send({status: 'success', message: 'user registered'});
-});
+    async github (req, res) {
+        passport.authenticate('github', { scope: ['user:email'] })(req, res);
+    }
 
-router.get('/github-callback', passport.authenticate('github', {failureRedirect: '/login'}), async (req, res) => {
-    req.session.user = req.user;
-    res.redirect('/user-profile');
-});
-
-router.get('/logout', (req, res)=>{
-    req.session.destroy(error =>{
-        if (error) return res.status(500).send({status: 'error', message: 'Fallo al cerrar sesion'});
-        res.redirect('/');
-    });
-});
-
-export default router;
+    async githubCallback (req, res) {
+        passport.authenticate('github', { failureRedirect: '/login' }, async (err, user) => {
+            if (err) {
+                return res.sendServerError(err.message);
+            };
+            if (!user) {
+                return res.sendClientError('GitHub authentication failed');
+            };
+            req.session.user = user;
+            res.redirect('/user-profile');
+        })(req, res);
+    };
+    
+    async logout (req, res) {
+        req.session.destroy((error)=> {
+            if (error) return res.sendServerError("Fallo al cerrar sesión");
+            res.redirect('/');
+        });
+    };
+};

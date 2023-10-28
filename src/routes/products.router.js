@@ -1,102 +1,131 @@
-import {Router} from 'express';
+import Router from './router.js';
 import Products from '../dao/dbManagers/products.manager.js';
+import { accessRolesEnum, passportStrategiesEnum } from '../config/enums.js';
 import {TypeError, ServerError, NotFoundError, ValidationError} from '../dao/dbManagers/errors.manager.js';
 
-const router = Router();
-const productsManager = new Products();
-
-router.get('/', async(req, res) => {
-    const {limit} = req.query;
-    const products = [];
-    try {
-        if (limit) {
-            products = await productsManager.getAllLimit(limit);
-        } else {
-            products = await productsManager.getAll();
-        };
-        res.send({status: 'success', payload: products});
-    } catch (e) {
-        switch (true) {
-            case (e instanceof TypeError):
-                res.status(412).send({status: 'error', error: e.message});
-                break;
-            case (e instanceof ServerError):
-                res.status(500).send({status: 'error', error: e.message});
-                break;
-            default:
-                res.status(400).send({status: 'error', error: e.message});
-        };
+export default class ProductsRouter extends Router {
+    constructor () {
+        super();
+        this.productsManager = new Products();
     };
-});
 
-router.get('/:pid', async (req, res) => {
-    const {pid} = req.params;
-    try {
-        const product = await productsManager.getByID(pid);
-        res.send({status: 'success', payload: product});
-    } catch (e) {
-        switch (true) {
-            case (e instanceof NotFoundError):
-                res.status(404).send({status: 'error', error: e.message});
-                break;
-            case (e instanceof ServerError):
-                res.status(500).send({status: 'error', error: e.message});
-                break;
-            default:
-                res.status(400).send({status: 'error', error: e.message});
+    init() {
+        this.get('/', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.getAll);
+        this.get('/:pid', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.getByID);
+        this.post('/', [accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, this.newProduct);
+        this.put('/:pid', [accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, this.updateProduct)
+        this.delete('/:pid', [accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, this.deleteProduct);
+    };
+
+    async getAll (req, res) {
+        const {limit} = req.query;
+        const products = [];
+        try {
+            if (limit) {
+                products = await this.productsManager.getAllPaginated(limit);
+            } else {
+                products = await this.productsManager.getAll();
+            };
+            res.sendSuccess(products);
+        } catch (e) {
+            res.sendServerError(e.message);
         };
     };
-});
 
-router.post('/', async (req, res) => {
-    const {title, category, description, code, price, stock, thumbnail} = req.body;
-    if (!title || !category || !description || !code || !price || !stock) res.status(400).send({status: 'error', error: 'Por favor, ingrese todos los parametros necesarios (title, category, description, code, price, stock, thumbnail)'});
-    const product = {
-        title,
-        category,
-        description,
-        code,
-        price,
-        stock,
-        thumbnail: thumbnail ? thumbnail : []
+    async getByID (req, res) {
+        const {pid} = req.params;
+        try {
+            const product = await this.productsManager.getByID(pid);
+            res.sendSuccess(product);
+        } catch (e) {
+            switch (true) {
+                case (e instanceof NotFoundError):
+                    res.sendNotFoundError(e.message);
+                    break;
+                case (e instanceof TypeError):
+                    res.sendValidationError(e.message);
+                    break;
+                case (e instanceof ServerError):
+                    res.sendServerError(e.message);
+                    break;
+                default:
+                    res.sendClientError(e.message);
+            };
+        };
     };
-    try {
-        const result = await productsManager.addProduct(product);
-        res.status(201).send({status: 'success', payload: result});
-    } catch (e) {
-        switch (true) {
-            case (e instanceof ValidationError):
-                res.status(412).send({status: 'error', error: e.message});
-                break;
-            case (e instanceof ServerError):
-                res.status(500).send({status: 'error', error: e.message});
-                break;
-            default:
-                res.status.send({status: 'error', error: e.message});
-        };    
-    };
-});
 
-router.put('/:pid', async (req, res)=>{
-    const {pid} = req.params;
-    const {title, category, description, code, price, stock, thumbnail} = req.body;
-    const data = {title, category, description, code, price, stock, thumbnail};
-    try {
-        const result = await productsManager.updateProduct(pid, data);
-        res.status(201).send({status: 'success', payload: result});
-    } catch (e) {
-        res.status(500).send({status: 'error', error: e.message});
+    async newProduct (req, res) {
+        const {title, category, description, code, price, stock, thumbnail} = req.body;
+        if (!title || !category || !description || !code || !price || !stock) return res.sendClientError('Por favor, ingrese todos los parametros necesarios (title, category, description, code, price, stock, thumbnail)');
+        const product = {
+            title,
+            category,
+            description,
+            code,
+            price,
+            stock,
+            thumbnail: thumbnail ? thumbnail : []
+        };
+        try {
+            const result = await this.productsManager.addProduct(product);
+            res.sendSuccessNewResource(result);
+        } catch (e) {
+            switch (true) {
+                case (e instanceof ValidationError):
+                    res.sendValidationError(e.message);
+                    break;
+                case (e instanceof ServerError):
+                    res.sendServerError(e.message);
+                    break;
+                default:
+                    res.sendClientError(e.message);
+            };
+        };
     };
-});
 
-router.delete('/:pid', async (req,res)=>{
-    const {pid} = req.params;
-    try {
-        const result = await productsManager.deleteProduct(pid);
-        res.status(201).send({status: 'success', payload: result});
-    } catch (e) {
-        res.status(500).send({status: 'error', error: e.message});
+    async updateProduct (req, res) {
+        const {pid} = req.params;
+        const {title, category, description, code, price, stock, thumbnail} = req.body;
+        const data = {title, category, description, code, price, stock, thumbnail};
+        try {
+            const result = await this.productsManager.updateProduct(pid, data);
+            res.sendSuccess(result);
+        } catch (e) {
+            switch (true) {
+                case (e instanceof NotFoundError):
+                    res.sendNotFoundError(e.message);
+                    break;
+                case (e instanceof ValidationError):
+                    res.sendValidationError(e.message);
+                    break;
+                case (e instanceof ServerError):
+                    res.sendServerError(e.message);
+                    break;
+                default:
+                    res.sendClientError(e.message);
+            };
+        };
     };
-});
 
-export default router;
+    async deleteProduct (req, res) {
+        const {pid} = req.params;
+        try {
+            const result = await this.productsManager.deleteProduct(pid);
+            res.sendSuccess(result);
+        } catch (e) {
+            switch (true) {
+                case (e instanceof NotFoundError):
+                    res.sendNotFoundError(e.message);
+                    break;
+                case (e instanceof ValidationError):
+                    res.sendValidationError(e.message);
+                    break;
+                case (e instanceof ServerError):
+                    res.sendServerError(e.message);
+                    break;
+                default:
+                    res.sendClientError(e.message);
+            };
+        };
+    };
+};

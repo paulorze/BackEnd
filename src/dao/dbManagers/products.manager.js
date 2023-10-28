@@ -15,12 +15,12 @@ export default class Products {
         };
     };
 
-    getAllLimit = async(limit)=>{
+    getAllPaginated = async(limit)=>{
         if (isNaN(limit) || limit <= 0){
             throw new TypeError('Por favor, ingrese una cantidad de productos a mostrar valida.');
         };
         try {            
-            const products = await productsModel.find().sort({_id: -1}).limit(limit).lean();
+            const products = await productsModel.paginate({}, {limit, page, lean: true});
             return products;
         } catch {
             throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');

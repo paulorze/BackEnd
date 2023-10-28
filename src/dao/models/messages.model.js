@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import mongoosePaginate from 'mongoose-paginate-v2';
 
 const messagesCollection = 'messages';
 
@@ -12,5 +13,7 @@ const messageSchema = new mongoose.Schema({
         required: true
     }
 });
+
+messageSchema.plugin(mongoosePaginate);
 
 export const messagesModel = mongoose.model(messagesCollection, messageSchema);

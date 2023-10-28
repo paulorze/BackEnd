@@ -14,12 +14,12 @@ export default class Messages {
         };
     };
 
-    getAllLimit = async(limit)=>{
+    getAllPaginated = async(limit)=>{
         if (isNaN(limit) || limit <= 0){
             throw new TypeError('Por favor, ingrese una cantidad de mensajes a mostrar valida.');
         };
         try {
-            const messages = await messagesModel.find().sort({_id: -1}).limit(limit);
+            const messages = await messagesModel.paginate({}, {limit, page, lean: true});
             return messages;
         } catch {
             throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
