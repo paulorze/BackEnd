@@ -14,13 +14,11 @@ export default class SessionsRouter extends Router {
     init() {
         this.post('/login', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.login);
         this.post('/register', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.register);
-        this.get('/github', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.github);
-        this.get('/github-callback', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, this.githubCallback);
         this.get('/logout', [accessRolesEnum.USER], passportStrategiesEnum.JWT, this.logout);
+        this.get('current', [accessRolesEnum.USER], passportStrategiesEnum.JWT, this.current);
     }
 
     async login (req, res) {
-        console.log("hola desde sessions.router");
         const {email, password} = req.body;
         try {
             const user = await this.usersManager.getByEmail(email);
@@ -52,23 +50,6 @@ export default class SessionsRouter extends Router {
             res.sendServerError(error.message);
         };
     };
-
-    async github (req, res) {
-        passport.authenticate('github', { scope: ['user:email'] })(req, res);
-    }
-
-    async githubCallback (req, res) {
-        passport.authenticate('github', { failureRedirect: '/login' }, async (err, user) => {
-            if (err) {
-                return res.sendServerError(err.message);
-            };
-            if (!user) {
-                return res.sendClientError('GitHub authentication failed');
-            };
-            req.session.user = user;
-            res.redirect('/user-profile');
-        })(req, res);
-    };
     
     async logout (req, res) {
         req.session.destroy((error)=> {
@@ -76,4 +57,8 @@ export default class SessionsRouter extends Router {
             res.redirect('/');
         });
     };
+
+    async current (req, res) {
+        req.session
+    }
 };

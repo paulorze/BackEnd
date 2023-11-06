@@ -55,7 +55,6 @@ export default class Router {
     };
 
     applyCustomPassportCall = (strategy) => (req, res, next) => {
-        console.log('hola desde applyCustom')
         if (strategy === passportStrategiesEnum.JWT) {
             passport.authenticate(strategy, function (err, user, info) {
                 if (err) return next(err);
@@ -73,7 +72,6 @@ export default class Router {
     };
 
     handlePolicies = (policies) => (req, res, next) => {
-        console.log('hola desde handle')
         if (policies[0] === 'PUBLIC') return next();
         const user = req.user;
         if (!policies.includes(user.role.toUpperCase()))
@@ -82,7 +80,6 @@ export default class Router {
     };
 
     generateCustomResponse = (req, res, next) => {
-        console.log('hola desde generate')
         res.sendSuccess = (data) => {
             res.status(200).json({data});
         };
@@ -106,10 +103,11 @@ export default class Router {
         res.sendNotFoundError = (error) => {
             res.status(404).json({error});
         };
+
+        next();
     };
 
     applyCallbacks (callbacks) {
-        console.log('hola desde applyCallbacks')
         return callbacks.map((callback) => async (...params) => {
             try {
                 await callback.apply(this, params);

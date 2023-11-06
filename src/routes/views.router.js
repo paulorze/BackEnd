@@ -31,7 +31,8 @@ router.get('/register', publicAccess, (req, res)=>{
 });
 
 router.get('/user-profile', privateAccess, (req, res)=>{
-    // let user = req.session.user;
+    console.log(req.user)
+    let user = req.user;
     res.render('userprofile', {
         style:'styles.css',
         user

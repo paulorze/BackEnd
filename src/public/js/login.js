@@ -14,9 +14,9 @@ form.addEventListener('submit', e=>{
         }
     }).then(result => {
         if (result.status === 200) {
-            window.location.replace('/')
+                window.location.replace('/user-profile');
         } else {
-            console.log('cabio')
+            console.log('Error al iniciar sesion.');
         }
     });
 });

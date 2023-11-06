@@ -19,7 +19,7 @@ export default class ProductsRouter extends Router {
 
     async getAll (req, res) {
         const {limit} = req.query;
-        const products = [];
+        let products = [];
         try {
             if (limit) {
                 products = await this.productsManager.getAllPaginated(limit);

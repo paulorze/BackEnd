@@ -18,7 +18,7 @@ export default class MessagesRouter extends Router {
 
     async getAll(req, res) {
         const {limit} = req.query;
-        const messages = [];
+        let messages = [];
         try {
             if (limit) {
                 messages = await this.messagesManager.getAllPaginated(limit);
