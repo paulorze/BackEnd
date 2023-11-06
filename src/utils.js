@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt';
 // Esto es para las sesiones
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
-import { PRIVATE_KEY_JWT } from './config/constants.js';
+import { config } from 'dotenv';
 
 // Esto es para poder acceder a los archivos por su ubicacion sin problemas
 const __filename = fileURLToPath(import.meta.url);
@@ -20,7 +20,9 @@ export const isValidPassword = (plainPassword, hashedPassword) => bcrypt.compare
 
 // El siguiente codigo corresponde a la permanencia de la sesion del usuario
 export const generateToken = (user)=> {
-    const token = jwt.sign({user}, PRIVATE_KEY_JWT, {expiresIn: '24h'});
+    config();
+    const privateKeyJWT = process.env.PRIVATE_KEY_JWT;
+    const token = jwt.sign({user}, privateKeyJWT, {expiresIn: '24h'});
     return token;
 };
 

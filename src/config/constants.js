@@ -1,1 +1,0 @@
-export const PRIVATE_KEY_JWT = '0U,cYREJv!79';
