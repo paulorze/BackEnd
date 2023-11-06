@@ -1,42 +1,11 @@
 import { productsModel } from "../models/products.model.js";
-import { ServerError, NotFoundError, ValidationError } from "./errors.manager.js";
+import { ServerError, ValidationError } from "./errors.manager.js";
+import Parent from "./parentClass.manager.js";
 import { validCategories, validKeys } from "./validCategories.manager.js";
 
-export default class Products {
+export default class Products extends Parent {
     constructor() {
-    };
-
-    getAll = async() => {
-        try {
-            const products = await productsModel.find().lean();
-            return products;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
-        };
-    };
-
-    getAllPaginated = async(limit)=>{
-        if (isNaN(limit) || limit <= 0){
-            throw new TypeError('Por favor, ingrese una cantidad de productos a mostrar valida.');
-        };
-        try {            
-            const products = await productsModel.paginate({}, {limit, page, lean: true});
-            return products;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
-        };
-    };
-
-    getByID = async(id)=> {
-        try {
-            const product = await productsModel.find({_id: id}).lean();
-            if (!product) {
-                throw new NotFoundError(`404 NOT FOUND: El producto con ID ${id} no existe.`)
-            };
-            return product;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar el producto.');
-        };
+        super(productsModel)
     };
 
     addProduct = async (product)=> {
@@ -47,7 +16,7 @@ export default class Products {
             this.validateNumber(product.price, 'price');
             this.validateCode(product.code);
             this.validateNumber(product.stock, 'stock');
-            const result = await productsModel.create(product);
+            const result = await this.save(product);
             return result;
         } catch (e) {
             if (e instanceof ValidationError){
@@ -92,7 +61,7 @@ export default class Products {
                         break;
                 };
             };
-            const result = await productsModel.updateOne({_id: id}, foundProduct);
+            const result = await this.model.updateOne({_id: id}, foundProduct);
             return result;
         } catch (e) {
             if (e instanceof ValidationError){
@@ -103,21 +72,12 @@ export default class Products {
         };
     };
 
-    deleteProduct = async (id) => {
-        try {            
-            const result = await productsModel.deleteOne({_id: id});
-            return result;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al guardar el producto.');
-        };
-    };
-
     validateTitle (string) {
         const titleRegEx= /^(?=.*[A-Za-z0-9'"()/áéíóúÁÉÍÓÚ])[\w\d\s'"()/áéíóúÁÉÍÓÚ]{5,40}$/;
         if (!titleRegEx.test(string.trim())) {
             throw new ValidationError (`412 PRECONDITION FAILED ERROR: El título ingresado no es válido.`);
         };
-    }
+    };
 
     validateCategory (category) {
         if (!validCategories.includes(category)) {

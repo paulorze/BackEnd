@@ -1,57 +1,10 @@
 import { cartsModel } from "../models/carts.model.js";
-import { ServerError, NotFoundError, ValidationError } from "./errors.manager.js";
+import { ServerError, ValidationError } from "./errors.manager.js";
+import Parent from "./parentClass.manager.js";
 
-export default class Carts {
+export default class Carts extends Parent{
     constructor () {
-    };
-
-    getAll = async() => {
-        try {
-            const carts = await cartsModel.find().lean();
-            return carts;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
-        };
-    };
-
-    getAllPaginated = async(limit, page)=>{
-        if (isNaN(limit) || limit <= 0){
-            throw new TypeError('Por favor, ingrese una cantidad de carritos a mostrar valida.');
-        };
-        try {
-            const carts = await cartsModel.paginate({}, {limit, page, lean: true});
-            return carts;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
-        };
-    };
-
-    getByID = async(id)=> {
-        try {
-            const cart = await cartsModel.find({_id: id}).lean();
-            if (!cart) throw new NotFoundError(`404 NOT FOUND: El carrito con ID ${id} no existe.`)
-            return cart;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
-        };
-    };
-
-    addCart = async (cart)=> {
-        try {
-            const result = await cartsModel.create(cart);
-            return result;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
-        };
-    };
-
-    deleteCart = async (cid) => {
-        try {
-            const result = await cartsModel.deleteOne({_id: cid});
-            return result;
-        } catch {
-            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al eliminar el carrito.');
-        };
+        super(cartsModel)
     };
 
     addCartProduct = async (cid, pid, quantity) => {
@@ -88,7 +41,6 @@ export default class Carts {
     };
 
     addCartProductsArray = async(cid, products) => {
-        //Aca se podria verificar si cada producto es de id valido y cantidad valida, pero creo que habria que crear una nueva instancia de productsManager y no se si sea conveniente
         const cart = await this.getByID(cid);
         cart.products = products;
         try {
