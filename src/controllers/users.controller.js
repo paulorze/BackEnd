@@ -1,4 +1,5 @@
 import { createHash, generateToken, isValidPassword } from "../utils.js";
+import { accessRolesEnum } from "../config/enums.js";
 import { getUser, saveUser } from "../services/users.service.js";
 
 const login = async (req, res) => {
@@ -22,6 +23,7 @@ const register = async (req, res) => {
         if (!username || !first_name || !last_name || !age || !email || !password || !role)
             return res.sendClientError("Valores incompletos. Falló el registro.");
         const exists = await getUser(email);
+        console.log(getUser)
         if (exists) return res.sendClientError("El mail ingresado ya fue utilizado. Falló el registro.");
         const hashedPassword = createHash(password);
         const newUser = {...req.body};
@@ -30,7 +32,8 @@ const register = async (req, res) => {
         const result = await saveUser(newUser);
         res.sendSuccess(result);
     } catch (e) {
-        res.sendServerError(error.message);
+        console.error();(e);
+        res.sendServerError(e);
     };
 };
 

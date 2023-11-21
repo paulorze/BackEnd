@@ -1,6 +1,7 @@
 import { cartsModel } from "../models/carts.model.js";
 import { ServerError, ValidationError } from "./errors.manager.js";
 import Parent from "./parentClass.manager.js";
+import Tickets from "./tickets.manager.js";
 
 export default class Carts extends Parent{
     constructor () {
@@ -49,5 +50,16 @@ export default class Carts extends Parent{
         } catch{
             throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
         };
+    }
+
+    completePurchase = async (cid) => {
+        const cart = await this.getByID(cid);
+        const availableProducts = cart.products.filter(product => product.stock >= 1)
+        const ticketsManager = new Tickets;
+        try {
+            await ticketsManager.save
+        } catch {
+            throw new ServerError ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
+        }
     }
 };

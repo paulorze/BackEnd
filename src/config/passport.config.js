@@ -1,8 +1,10 @@
 import passport from 'passport';
-
+import dotenv from "dotenv";
 import jwt from 'passport-jwt';
-import { PRIVATE_KEY_JWT } from './constants.js';
 import { passportStrategiesEnum } from './enums.js';
+
+dotenv.config();
+const PRIVATE_KEY_JWT = process.env.PRIVATE_KEY_JWT;
 
 const JWTStrategy = jwt.Strategy;
 const ExtractJWT = jwt.ExtractJwt;
