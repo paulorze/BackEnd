@@ -1,3 +1,6 @@
+import { errorsEnum } from "../../config/enums.js";
+import CustomError from "../../middlewares/errors/CustomError.js";
+import { generateDatabaseErrorInfo, generateEmptyCartErrorInfo, generateProductFieldValidationErrorInfo, generateProductNotFoundErrorInfo, generateUnhandledErrorInfo } from "../../middlewares/errors/error.info.js";
 import { cartsModel }  from "../models/carts.model.js";
 import Parent from "./parent.dao.js";
 import Products from "./products.dao.js";
@@ -10,27 +13,83 @@ export default class Carts extends Parent{
 
     readByEmail = async (email) => {
         try {
-            const user = await this.model.findOne({purchaser: email}).lean();
-            if (!user) {
-                return null;
-            }
-            return user;
+            const cart = await this.model.findOne({purchaser: email}).lean();
+            if (!cart) {
+                throw CustomError.createError({
+                    name: 'Object Not Found Error',
+                    cause: generateProductNotFoundErrorInfo(),
+                    message: 'Error 404: Object Not Found.',
+                    code: errorsEnum.NOT_FOUND_ERROR
+                });   
+            };
+            return cart;
         } catch {
-            throw new Error ('500 INTERNAL SERVER ERROR: Error al cargar los objetos.');
+            throw CustomError.createError({
+                name: 'Database Error',
+                cause: generateDatabaseErrorInfo(),
+                message: 'Error trying connect to the database.',
+                code: errorsEnum.DATABASE_ERROR
+            });    
         };
     };
 
     deleteByMail = async (email) => {
         const cart = this.readByEmail(email);
-        return this.delete(cart._id)
-    }
+        if (!cart) {
+            throw CustomError.createError({
+                name: 'Object Not Found Error',
+                cause: generateProductNotFoundErrorInfo(),
+                message: 'Error 404: Object Not Found.',
+                code: errorsEnum.NOT_FOUND_ERROR
+            });   
+        };
+        try {
+            const result = this.delete(cart._id);
+            return result;
+        } catch (e) {
+            switch (e.code) {
+                case errorsEnum.NOT_FOUND_ERROR:
+                case errorsEnum.DATABASE_ERROR:
+                    throw e;
+                default:
+                    throw CustomError.createError({
+                        name: 'Unhandled Error',
+                        cause: generateUnhandledErrorInfo(),
+                        message: 'Something unexpected happened.',
+                        code: errorsEnum.UNHANDLED_ERROR
+                    });
+            };
+        };
+    };
 
     addCartProduct = async (email, pid, quantity) => {
-        if (quantity <= 0 || isNaN(quantity)) throw new Error('Por favor, ingrese una cantidad valida.');
+        if (quantity <= 0 || isNaN(quantity)) {
+            throw CustomError.createError({
+                name: 'Validation Error',
+                cause: generateProductFieldValidationErrorInfo(quantity, "quantity"),
+                message: 'Error validating the user input.',
+                code: errorsEnum.VALIDATION_ERROR
+            });
+        };
         const products = new Products();
         const productExists = products.readByID(pid);
-        if (!productExists) throw new Error('Por favor, ingrese un producto valido.');
+        if (!productExists) {
+            throw CustomError.createError({
+                name: 'Object Not Found Error',
+                cause: generateProductNotFoundErrorInfo(),
+                message: 'Error 404: Object Not Found.',
+                code: errorsEnum.NOT_FOUND_ERROR
+            });   
+        };
         const cart = await this.readByEmail(email);
+        if (!cart) {
+            throw CustomError.createError({
+                name: 'Object Not Found Error',
+                cause: generateProductNotFoundErrorInfo(),
+                message: 'Error 404: Object Not Found.',
+                code: errorsEnum.NOT_FOUND_ERROR
+            });   
+        };
         if (cart.products.some(product => product.id === pid)) {
             cart.products = cart.products.map(product => {
                 if (product.id === pid) {
@@ -45,37 +104,99 @@ export default class Carts extends Parent{
         try {
             const result = await this.update(cart._id, cart);
             return result;
-        } catch{
-            throw new Error ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
+        } catch (e) {
+            switch (e.code) {
+                case errorsEnum.NOT_FOUND_ERROR:
+                case errorsEnum.DATABASE_ERROR:
+                    throw e;
+                default:
+                    throw CustomError.createError({
+                        name: 'Unhandled Error',
+                        cause: generateUnhandledErrorInfo(),
+                        message: 'Something unexpected happened.',
+                        code: errorsEnum.UNHANDLED_ERROR
+                    });
+            };
         };
     };
 
     deleteCartProduct= async (email, pid) => {
         const cart = await this.readByEmail(email);
+        if (!cart) {
+            throw CustomError.createError({
+                name: 'Object Not Found Error',
+                cause: generateProductNotFoundErrorInfo(),
+                message: 'Error 404: Object Not Found.',
+                code: errorsEnum.NOT_FOUND_ERROR
+            });   
+        };
         cart.products = cart.products.filter(product => product.pid.toString() !== pid);
         try {
             const result = await this.update(cart._id, cart);
             return result;
-        } catch {
-            throw new Error ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
+        } catch (e) {
+            switch (e.code) {
+                case errorsEnum.NOT_FOUND_ERROR:
+                case errorsEnum.DATABASE_ERROR:
+                    throw e;
+                default:
+                    throw CustomError.createError({
+                        name: 'Unhandled Error',
+                        cause: generateUnhandledErrorInfo(),
+                        message: 'Something unexpected happened.',
+                        code: errorsEnum.UNHANDLED_ERROR
+                    });
+            };
         };
     };
 
     addCartProductsArray = async(email, products) => {
         const cart = await this.readByEmail(email);
+        if (!cart) {
+            throw CustomError.createError({
+                name: 'Object Not Found Error',
+                cause: generateProductNotFoundErrorInfo(),
+                message: 'Error 404: Object Not Found.',
+                code: errorsEnum.NOT_FOUND_ERROR
+            });   
+        };
         cart.products = products;
         try {
             const result = await this.update(cart._id, cart);
             return result;
-        } catch{
-            throw new Error ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
+        } catch (e) {
+            switch (e.code) {
+                case errorsEnum.NOT_FOUND_ERROR:
+                case errorsEnum.DATABASE_ERROR:
+                    throw e;
+                default:
+                    throw CustomError.createError({
+                        name: 'Unhandled Error',
+                        cause: generateUnhandledErrorInfo(),
+                        message: 'Something unexpected happened.',
+                        code: errorsEnum.UNHANDLED_ERROR
+                    });
+            };
         };
     };
 
     completePurchase = async (email) => {
         const cart = await this.model.findOne({purchaser : email}).populate('products.pid');
+        if (!cart) {
+            throw CustomError.createError({
+                name: 'Object Not Found Error',
+                cause: generateProductNotFoundErrorInfo(),
+                message: 'Error 404: Object Not Found.',
+                code: errorsEnum.NOT_FOUND_ERROR
+            });   
+        };
         if (!cart.products || cart.products.length === 0) {
-            throw new Error('400 BAD REQUEST: El carrito no tiene productos.');
+            throw CustomError.createError({
+                name: 'Empty Cart Products Error',
+                cause: generateEmptyCartErrorInfo(),
+                message: 'There are no products in the cart.',
+                code: errorsEnum.VALIDATION_ERROR
+            });
         }
         const productsManager = new Products();
         let total = 0;
@@ -92,7 +213,18 @@ export default class Carts extends Parent{
                     i--;
                 } 
             } catch (e) {
-                throw new Error('400 BAD REQUEST: El carrito no tiene productos.');
+                switch (e.code) {
+                    case errorsEnum.NOT_FOUND_ERROR:
+                    case errorsEnum.DATABASE_ERROR:
+                        throw e;
+                    default:
+                        throw CustomError.createError({
+                            name: 'Unhandled Error',
+                            cause: generateUnhandledErrorInfo(),
+                            message: 'Something unexpected happened.',
+                            code: errorsEnum.UNHANDLED_ERROR
+                        });
+                };
             };
         };
         const ticketsManager = new Tickets();
@@ -100,8 +232,19 @@ export default class Carts extends Parent{
         try {
             await ticketsManager.create(ticketObject);
             return this.update(cart._id, cart);
-        } catch {
-            throw new Error ('500 INTERNAL SERVER ERROR: Error al cargar los productos.');
-        }
+        } catch (e) {
+            switch (e.code) {
+                case errorsEnum.NOT_FOUND_ERROR:
+                case errorsEnum.DATABASE_ERROR:
+                    throw e;
+                default:
+                    throw CustomError.createError({
+                        name: 'Unhandled Error',
+                        cause: generateUnhandledErrorInfo(),
+                        message: 'Something unexpected happened.',
+                        code: errorsEnum.UNHANDLED_ERROR
+                    });
+            };
+        };
     };
 };

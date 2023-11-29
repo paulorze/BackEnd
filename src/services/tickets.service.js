@@ -2,10 +2,10 @@ import Tickets from "../dao/classes/tickets.dao.js";
 
 const ticketsManager = new Tickets();
 
-const getTickets = async (limit = null) => {
+const getTickets = async (limit = null, page = null) => {
     let tickets;
     if (limit != null) {
-        tickets = await ticketsManager.readAllPaginated(limit);
+        tickets = await ticketsManager.readAllPaginated(limit, page);
     } else {
         tickets = await ticketsManager.readAll();
     }

@@ -2,12 +2,14 @@ import Messages from "../dao/classes/messages.dao.js";
 
 const messagesManager = new Messages();
 
-const getMessages = async (user, sender = null) => {
+const getMessages = async (user, receiver = null) => {
     let messages;
     if (sender != null) {
-        messages = await messagesManager.readConversation(user, sender);
+        messages = await messagesManager.readConversation(user, receiver);
+        messages.push(await messagesManager.readConversation(receiver, user))
     } else {
-        messages = await messagesManager.readByUser(user);
+        messages = await messagesManager.readBySender(user);
+        messages.push(await messagesManager.readByReceiver(user));
     };
     return messages;
 };
