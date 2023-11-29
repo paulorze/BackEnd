@@ -17,9 +17,13 @@ const getAllCarts = async (req, res) => {
     } catch (e) {
         switch (e.code) {
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
             case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -33,6 +37,7 @@ const getAllCarts = async (req, res) => {
 const getCart = async (req, res) => {
     const email = req.user.email;
     if (!email) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw new CustomError.createError({
             name: 'Get cart Error',
             cause: generateMissingEmailErrorInfo(),
@@ -45,10 +50,14 @@ const getCart = async (req, res) => {
         res.send({ status: 'success', result }); 
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.NOT_FOUND_ERROR:
             case errorsEnum.DATABASE_ERROR:
-                throw e;
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -62,6 +71,7 @@ const getCart = async (req, res) => {
 const newCart = async (req, res) => {
     const email = req.user.email;
     if (!email) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw new CustomError.createError({
             name: 'Get cart Error',
             cause: generateMissingEmailErrorInfo(),
@@ -75,10 +85,14 @@ const newCart = async (req, res) => {
         res.send({ status: 'success', result }); 
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.VALIDATION_ERROR:
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -92,6 +106,7 @@ const newCart = async (req, res) => {
 const deleteCartByEmail = async (req, res) => {
     const email = req.user.email;
     if (!email) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw new CustomError.createError({
             name: 'Get cart Error',
             cause: generateMissingEmailErrorInfo(),
@@ -104,10 +119,14 @@ const deleteCartByEmail = async (req, res) => {
         res.send({ status: 'success', result }); 
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.NOT_FOUND_ERROR:
             case errorsEnum.DATABASE_ERROR:
-                throw e;
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -121,6 +140,7 @@ const deleteCartByEmail = async (req, res) => {
 const addCartProducts = async (req, res) =>  {
     const email = req.user.email;
     if (!email) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Get cart Error',
             cause: generateMissingEmailErrorInfo(),
@@ -130,6 +150,7 @@ const addCartProducts = async (req, res) =>  {
     };
     const {products} = req.body;
     if (!products) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Add products array to cart Error',
             cause: generateCartAddProductArrayErrorInfo(products),
@@ -142,10 +163,14 @@ const addCartProducts = async (req, res) =>  {
         res.send({ status: 'success', result }); 
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.NOT_FOUND_ERROR:
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -160,6 +185,7 @@ const addCartProductById = async (req, res) => {
     const email = req.user.email;
     const {pid, quantity} = req.body;
     if (!pid || !quantity) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Add product to cart Error',
             cause: generateCartAddProductErrorInfo(pid, quantity),
@@ -169,6 +195,7 @@ const addCartProductById = async (req, res) => {
     };
     const product = await getProductById(pid);
     if (!product) {
+        req.logger.warning('Error 404: The Requested Object Has Not Been Found');
         throw CustomError.createError({
             name: 'Product Not Found Error',
             cause: generateProductNotFoundErrorInfo(pid),
@@ -181,11 +208,17 @@ const addCartProductById = async (req, res) => {
         res.send({ status: 'success', result }); 
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.NOT_FOUND_ERROR:
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
             case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -200,6 +233,7 @@ const deleteCartProductById = async (req, res) => {
     const email = req.user.email;
     const {pid} = req.body;
     if (!pid) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Delete Product From Cart Error',
             cause: generateCartDeleteProductErrorInfo(),
@@ -212,10 +246,14 @@ const deleteCartProductById = async (req, res) => {
         res.send({ status: 'success', result }); 
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.NOT_FOUND_ERROR:
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -233,11 +271,17 @@ const purchase = async (req, res) => {
         res.send({ status: 'success', result }); 
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.NOT_FOUND_ERROR:
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
             case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),

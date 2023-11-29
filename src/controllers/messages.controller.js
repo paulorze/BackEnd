@@ -7,6 +7,7 @@ const getMessagesController = async(req, res) => {
     const user = req.user.email;
     const {receiver} = req.query;
     if (!user) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Get Messages Error',
             cause: generateMissingEmailErrorInfo(),
@@ -20,10 +21,16 @@ const getMessagesController = async(req, res) => {
     } catch (e) {
         switch (e.code) {
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
             case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
             case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -37,6 +44,7 @@ const getMessagesController = async(req, res) => {
 const getMessageByIdController = async (req, res) => {
     const {id} = req.params;
     if (!id) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Get Message Error',
             cause: generateMissingIdErrorInfo(),
@@ -50,10 +58,16 @@ const getMessageByIdController = async (req, res) => {
     } catch (e) {
         switch (e.code) {
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
             case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
             case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -68,6 +82,7 @@ const saveMessageController = async (req, res) => {
     const user = req.user.email;
     const {receiver, message} = req.body;
     if (!user || !receiver || !message) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Create Message Error',
             cause: generateMessageCreateErrorInfo({user, receiver, message}),
@@ -81,10 +96,16 @@ const saveMessageController = async (req, res) => {
     } catch (e) {
         switch (e.code) {
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
             case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
             case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -98,6 +119,7 @@ const saveMessageController = async (req, res) => {
 const deleteMessageController = async (req, res) => {
     const {id} = req.params;
     if (!id) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Delete Message Error',
             cause: generateMissingIdErrorInfo(),
@@ -111,10 +133,16 @@ const deleteMessageController = async (req, res) => {
     } catch (e) {
         switch (e.code) {
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
             case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
             case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),

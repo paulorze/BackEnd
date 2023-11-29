@@ -1,12 +1,13 @@
 import { accessRolesEnum, errorsEnum } from '../config/enums.js';
 import CustomError from '../middlewares/errors/CustomError.js';
-import { generateMissingIdErrorInfo, generateServerErrorInfo, generateUnauthorizedErrorInfo, generateUnhandledErrorInfo, generateUserConflictErrorInfo, generateUserCreateErrorInfo, generateUserLoginErrorInfo } from '../middlewares/errors/error.info.js';
+import { generateMissingIdErrorInfo, generateUnauthorizedErrorInfo, generateUnhandledErrorInfo, generateUserConflictErrorInfo, generateUserCreateErrorInfo, generateUserLoginErrorInfo } from '../middlewares/errors/error.info.js';
 import { getUser, saveUser, updateUser } from '../services/users.service.js';
 import { createHash, generateToken, isValidPassword } from '../utils.js';
 
 const login = async (req, res) => {
     const {email, password} = req.body;
     if (!email || !password) {
+        req.logger.info('Unauthorized Error: Incorrect credentials.');
         throw CustomError.createError({
             name: 'Login Error',
             cause: generateUserLoginErrorInfo(),
@@ -17,6 +18,7 @@ const login = async (req, res) => {
     try {
         const user = await getUser(email);
         if (!user) {
+            req.logger.info('Unauthorized Error: Incorrect credentials.');
             throw CustomError.createError({
                 name: 'Login Error',
                 cause: generateUserLoginErrorInfo(),
@@ -26,6 +28,7 @@ const login = async (req, res) => {
         };
         const comparePassword = isValidPassword(password, user.password);
         if (!comparePassword) {
+            req.logger.info('Unauthorized Error: Incorrect credentials.');
             throw CustomError.createError({
                 name: 'Login Error',
                 cause: generateUserLoginErrorInfo(),
@@ -40,11 +43,17 @@ const login = async (req, res) => {
         res.cookie('session', accessToken, {maxAge: 60*60*1000, httpOnly: true}).send({ status: 'success', accessToken });  //?OJOACAAAAAA
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.NOT_FOUND_ERROR:
-            case errorsEnum.VALIDATION_ERROR:
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
+            case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -58,6 +67,7 @@ const login = async (req, res) => {
 const register = async (req, res) => {
     const { username, first_name, last_name, email, password, role } = req.body;
     if (!username || !first_name || !last_name || !email || !password) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Create User Error',
             cause: generateUserCreateErrorInfo({username, first_name, last_name, email, password}),
@@ -68,6 +78,7 @@ const register = async (req, res) => {
     try {
         const exists = await getUser(email);
         if (exists) {
+            req.logger.info('Conflict Error: Trying To Register Existing Email.');
             throw CustomError.createError({
                 name: 'Existing Email Error',
                 cause: generateUserConflictErrorInfo(email),
@@ -83,11 +94,17 @@ const register = async (req, res) => {
         res.send({ status: 'success', result });
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.NOT_FOUND_ERROR:
-            case errorsEnum.VALIDATION_ERROR:
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
+            case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),
@@ -101,6 +118,7 @@ const register = async (req, res) => {
 const updateUserData = async (req, res) => {
     const {id} = req.params;
     if (!id) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Update User Error',
             cause: generateMissingIdErrorInfo(),
@@ -109,6 +127,7 @@ const updateUserData = async (req, res) => {
         });
     };
     if (id != req.user._id) {
+        req.logger.error('Unauthorized Access Error: Unauthorized User Trying To Access Priviliged Functions.');
         throw CustomError.createError({
             name: 'Unauthorized Access Error',
             cause: generateUnauthorizedErrorInfo(),
@@ -118,6 +137,7 @@ const updateUserData = async (req, res) => {
     };
     const { username, first_name, last_name, email, password } = req.body;
     if (!username || !first_name || !last_name || !email || !password){
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Update User Error',
             cause: generateUserCreateErrorInfo({username, first_name, last_name, email, password}),
@@ -132,11 +152,17 @@ const updateUserData = async (req, res) => {
         return res.send({ status: 'success', result });
     } catch (e) {
         switch (e.code) {
-            case errorsEnum.NOT_FOUND_ERROR:
-            case errorsEnum.VALIDATION_ERROR:
             case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
+            case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
             default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
                 throw CustomError.createError({
                     name: 'Unhandled Error',
                     cause: generateUnhandledErrorInfo(),

@@ -9,6 +9,9 @@ import { privateKeyJWT } from './config/config.js';
 // Esto es para el mocking
 import {fakerES as faker } from '@faker-js/faker';
 import { validCategories } from './config/enums.js';
+// Esto es para el logger
+import winston from 'winston';
+import * as dotenv from 'dotenv';
 
 // Esto es para poder acceder a los archivos por su ubicacion sin problemas
 const __filename = fileURLToPath(import.meta.url);
@@ -39,4 +42,73 @@ export const mockProduct = () => {
         code: faker.string.alphanumeric(4),
         stock: faker.number.int(1),
     };
+};
+
+// El siguiente codigo corresponde al logger:
+dotenv.config();
+const ENVIRONMENT = process.env.NODE_ENV;
+
+const customLevelOptions = {
+    levels: {
+        fatal: 0,
+        error: 1,
+        warning: 2,
+        info: 3,
+        http: 4,
+        debug: 5
+    },
+    colors: {
+        fatal: 'red',
+        error: 'red',
+        warning: 'yellow',
+        info: 'green',
+        http: 'green',
+        debug: 'blue'
+    }
+};
+
+let logger;
+
+if(ENVIRONMENT === 'PRODUCTION') {
+    logger = winston.createLogger({
+        levels: customLevelOptions.levels,
+        transports: [
+                new winston.transports.Console({
+                    level: 'info',
+                    format: winston.format.combine(
+                        winston.format.colorize({
+                            all: true,
+                            colors: customLevelOptions.colors
+                        }),
+                        winston.format.simple()
+                    )
+                }),
+                new winston.transports.File({
+                    filename: 'logs/errors.log',
+                    level: 'error'
+                })
+            ]
+        });
+} else {
+    logger = winston.createLogger({
+        levels: customLevelOptions.levels,
+        transports: [
+                new winston.transports.Console({
+                    level: 'debug',
+                    format: winston.format.combine(
+                        winston.format.colorize({
+                            all: true,
+                            colors: customLevelOptions.colors
+                        }),
+                        winston.format.simple()
+                    )
+                })
+            ]
+        });
+};
+
+export const addLogger = (req, res, next) => {
+    req.logger = logger;
+    req.logger.info(`${req.method} en ${req.url} - ${new Date().toISOString()}`);
+    next();
 };
