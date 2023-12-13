@@ -8,9 +8,9 @@ export default class MessagesRouter extends Router {
     };
 
     init() {
-        this.get('/', [accessRolesEnum.USER], passportStrategiesEnum.JWT, getMessagesController);
-        this.get('/:id', [accessRolesEnum.USER], passportStrategiesEnum.JWT, getMessageByIdController);
-        this.post('/', [accessRolesEnum.USER], passportStrategiesEnum.JWT, saveMessageController);
-        this.delete('/:id', [accessRolesEnum.USER], passportStrategiesEnum.JWT, deleteMessageController);
+        this.get('/', [accessRolesEnum.USER, accessRolesEnum.PREMIUM], passportStrategiesEnum.JWT, getMessagesController);
+        this.get('/:id', [accessRolesEnum.USER, accessRolesEnum.PREMIUM], passportStrategiesEnum.JWT, getMessageByIdController);
+        this.post('/', [accessRolesEnum.USER, accessRolesEnum.PREMIUM], passportStrategiesEnum.JWT, saveMessageController);
+        this.delete('/:id', [accessRolesEnum.USER, accessRolesEnum.PREMIUM], passportStrategiesEnum.JWT, deleteMessageController);
     };
 };

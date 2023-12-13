@@ -1,3 +1,7 @@
+import { premiumKey } from "../../config/config.js";
+import { errorsEnum } from "../../config/enums.js";
+import CustomError from "../../middlewares/errors/CustomError.js";
+import { generateDatabaseErrorInfo } from "../../middlewares/errors/error.info.js";
 import { usersModel } from "../models/users.model.js";
 import Parent from "./parent.dao.js";
 
@@ -14,8 +18,29 @@ export default class Users extends Parent {
             }
             return user;
         } catch {
-            throw new Error ('500 INTERNAL SERVER ERROR: Error al cargar los objetos.');
+            throw CustomError.createError({
+                name: 'Database Error',
+                cause: generateDatabaseErrorInfo(),
+                message: 'Error trying connect to the database.',
+                code: errorsEnum.DATABASE_ERROR
+            });
         };
     };
 
+    recategorize = async (id) => {
+        const user = this.readByID(id);
+        user.role = user.role === premiumKey ? 'USER' : premiumKey;
+        try {
+            return this.update(id, user);
+        } catch (error) {
+            throw CustomError.createError({
+                name: 'Database Error',
+                cause: generateDatabaseErrorInfo(),
+                message: 'Error trying connect to the database.',
+                code: errorsEnum.DATABASE_ERROR
+            });
+        };
+    };
+
+    
 };

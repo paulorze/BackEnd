@@ -5,13 +5,15 @@ import { dirname } from 'path';
 import bcrypt from 'bcrypt';
 // Esto es para las sesiones
 import jwt from 'jsonwebtoken';
-import { privateKeyJWT } from './config/config.js';
+import { passwordNodemailer, privateKeyJWT, userNodemailer } from './config/config.js';
 // Esto es para el mocking
 import {fakerES as faker } from '@faker-js/faker';
 import { validCategories } from './config/enums.js';
 // Esto es para el logger
 import winston from 'winston';
 import * as dotenv from 'dotenv';
+// Esto es para enviar correos y resetear password
+import nodemailer from 'nodemailer';
 
 // Esto es para poder acceder a los archivos por su ubicacion sin problemas
 const __filename = fileURLToPath(import.meta.url);
@@ -24,8 +26,8 @@ export const createHash = password => bcrypt.hashSync(password, bcrypt.genSaltSy
 export const isValidPassword = (plainPassword, hashedPassword) => bcrypt.compareSync(plainPassword, hashedPassword);
 
 // El siguiente codigo corresponde a la permanencia de la sesion del usuario
-export const generateToken = (user)=> {
-    const token = jwt.sign({user}, privateKeyJWT, {expiresIn: '24h'});
+export const generateToken = (user, time)=> {
+    const token = jwt.sign({user}, privateKeyJWT, {expiresIn: time});
     return token;
 };
 
@@ -111,4 +113,22 @@ export const addLogger = (req, res, next) => {
     req.logger = logger;
     req.logger.info(`${req.method} en ${req.url} - ${new Date().toISOString()}`);
     next();
+};
+
+export const transporter = nodemailer.createTransport({
+    service:'gmail',
+    auth: {
+        user: userNodemailer,
+        pass: passwordNodemailer
+    },
+    secure: true
+});
+
+export const passwordResetTokenVerification = (token) => {
+    try {
+        const decoded = jwt.verify(token, privateKeyJWT);
+        return decoded;
+    } catch (err) {
+        return null;
+    };
 };

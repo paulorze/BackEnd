@@ -1,4 +1,4 @@
-import { adminKey } from "./config.js";
+import { adminKey, premiumKey } from "./config.js";
 
 const validCategories = [
     'Bazaar', 
@@ -25,7 +25,9 @@ const passportStrategiesEnum = {
 const accessRolesEnum = {
     ADMIN: adminKey,
     USER: "USER",
-    PUBLIC: "PUBLIC"
+    PUBLIC: "PUBLIC",
+    PREMIUM: premiumKey,
+    PWDRESET: "PASSWORDRESET"
 };
 
 const errorsEnum = {

@@ -10,6 +10,10 @@ const generateCartAddProductArrayErrorInfo = (products) => {
     Failed to add products to cart.`;
 };
 
+const generateCartAddProductOwnerErrorInfo = () => {
+    return `Users can not add products they own to their carts.`;
+};
+
 const generateCartCreateErrorInfo = (purchaser) => {
     return `Incomplete values.
     * purchaser needs to be a string, reaceived ${purchaser}.
@@ -48,6 +52,14 @@ const generateMissingEmailErrorInfo = () => {
 
 const generateMissingIdErrorInfo = () => {
     return `Missing ID parameter.`
+};
+
+const generateMissingPasswordErrorInfo = () => {
+    return `Missing Password parameter.`
+};
+
+const generatePasswordResetErrorInfo = () => {
+    return `The new password can not be the same as the old password.`;
 };
 
 const generateProductFieldValidationErrorInfo = (input, field) => {
@@ -110,6 +122,7 @@ const generateUserLoginErrorInfo = () => {
 export {
     generateCartAddProductErrorInfo,
     generateCartAddProductArrayErrorInfo,
+    generateCartAddProductOwnerErrorInfo,
     generateCartCreateErrorInfo,
     generateCartDeleteProductErrorInfo,
     generateDatabaseErrorInfo,
@@ -118,6 +131,8 @@ export {
     generateMessageCreateErrorInfo,
     generateMissingIdErrorInfo,
     generateMissingEmailErrorInfo,
+    generateMissingPasswordErrorInfo,
+    generatePasswordResetErrorInfo,
     generateProductNotFoundErrorInfo,
     generateProductCreateErrorInfo,
     generateProductFieldValidationErrorInfo,

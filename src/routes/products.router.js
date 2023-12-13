@@ -11,8 +11,8 @@ export default class ProductsRouter extends Router {
         this.get('/mockingproducts', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, mockProducts);
         this.get('/', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, getAllProducts);
         this.get('/:id', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, getProduct);
-        this.post('/', [accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, newProduct);
-        this.put('/:id', [accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, updateProductById);
-        this.delete('/:id', [accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, deleteProductById);
+        this.post('/', [accessRolesEnum.ADMIN, accessRolesEnum.PREMIUM], passportStrategiesEnum.JWT, newProduct);
+        this.put('/:id', [accessRolesEnum.ADMIN, accessRolesEnum.PREMIUM], passportStrategiesEnum.JWT, updateProductById);
+        this.delete('/:id', [accessRolesEnum.ADMIN, accessRolesEnum.PREMIUM], passportStrategiesEnum.JWT, deleteProductById);
     };
 };

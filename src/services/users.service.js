@@ -22,10 +22,15 @@ const deleteUser = async (id) => {
     return await usersManager.delete(id);
 };
 
+const recategorizeUser = async (id) => {
+    return await usersManager.recategorize(id);
+}
+
 export {
     getUser,
     getUserList,
     saveUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    recategorizeUser
 };

@@ -1,6 +1,6 @@
 import { errorsEnum } from "../../config/enums.js";
 import CustomError from "../../middlewares/errors/CustomError.js";
-import { generateDatabaseErrorInfo, generateEmptyCartErrorInfo, generateProductFieldValidationErrorInfo, generateProductNotFoundErrorInfo, generateUnhandledErrorInfo } from "../../middlewares/errors/error.info.js";
+import { generateCartAddProductOwnerErrorInfo, generateDatabaseErrorInfo, generateEmptyCartErrorInfo, generateProductFieldValidationErrorInfo, generateProductNotFoundErrorInfo, generateUnhandledErrorInfo } from "../../middlewares/errors/error.info.js";
 import { cartsModel }  from "../models/carts.model.js";
 import Parent from "./parent.dao.js";
 import Products from "./products.dao.js";
@@ -80,6 +80,14 @@ export default class Carts extends Parent{
                 message: 'Error 404: Object Not Found.',
                 code: errorsEnum.NOT_FOUND_ERROR
             });   
+        };
+        if (productExists.owner === email){
+            throw CustomError.createError({
+                name: 'Object Not Found Error',
+                cause: generateCartAddProductOwnerErrorInfo(),
+                message: 'Conflict Error: Can not purchase products you own.',
+                code: errorsEnum.CONFLICT_ERROR
+            });  
         };
         const cart = await this.readByEmail(email);
         if (!cart) {

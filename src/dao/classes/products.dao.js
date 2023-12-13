@@ -2,7 +2,7 @@ import { productsModel } from "../models/products.model.js";
 import Parent from "./parent.dao.js";
 import { errorsEnum, validCategories, validKeys } from "../../config/enums.js";
 import CustomError from "../../middlewares/errors/CustomError.js";
-import { generateInvalidKeysErrorInfo, generateProductFieldValidationErrorInfo, generateServerErrorInfo } from "../../middlewares/errors/error.info.js";
+import { generateInvalidKeysErrorInfo, generateProductFieldValidationErrorInfo, generateServerErrorInfo, generateUnauthorizedErrorInfo } from "../../middlewares/errors/error.info.js";
 
 export default class Products extends Parent {
     constructor() {
@@ -35,8 +35,16 @@ export default class Products extends Parent {
         };
     };
     
-    updateProduct = async (id, data)=> {
+    updateProduct = async (id, owner, data)=> {
         const foundProduct = this.readByID(id);
+        if (owner !== 'admin' && owner !== foundProduct.owner) {
+            throw CustomError.createError({
+                name: 'Invalid Key Error',
+                cause: generateUnauthorizedErrorInfo(),
+                message: 'Error on keys received.',
+                code: errorsEnum.UNAUTHORIZED_ERROR
+            });
+        };
         for (const [key, value] of Object.entries(data)) {
             if (!validKeys.includes(key)) {
                 throw CustomError.createError({
@@ -93,6 +101,20 @@ export default class Products extends Parent {
                     });
             };
         };
+    };
+
+    deleteProduct = async (id, owner) => {
+        const foundProduct = this.readByID(id);
+        if (owner !== 'admin' && owner !== foundProduct.owner) {
+            throw CustomError.createError({
+                name: 'Invalid Key Error',
+                cause: generateUnauthorizedErrorInfo(),
+                message: 'Error on keys received.',
+                code: errorsEnum.UNAUTHORIZED_ERROR
+            });
+        };
+        const result = await this.delete(id);
+        return result;
     };
 
     updateStock = async (id, purchaseAmount) => {

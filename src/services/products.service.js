@@ -20,12 +20,12 @@ const saveProduct = async (product) => {
     return await productsManager.addProduct(product);
 };
 
-const deleteProduct = async (id) => {
-    return await productsManager.delete(id);
+const deleteProduct = async (id, owner) => {
+    return await productsManager.deleteProduct(id, owner);
 };
 
-const updateProduct = async (id, data) => {
-    return await productsManager.updateProduct(id, data);
+const updateProduct = async (id, owner, data) => {
+    return await productsManager.updateProduct(id, owner, data);
 };
 
 export {

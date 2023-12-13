@@ -1,8 +1,9 @@
 import { accessRolesEnum, errorsEnum } from '../config/enums.js';
 import CustomError from '../middlewares/errors/CustomError.js';
-import { generateMissingIdErrorInfo, generateUnauthorizedErrorInfo, generateUnhandledErrorInfo, generateUserConflictErrorInfo, generateUserCreateErrorInfo, generateUserLoginErrorInfo } from '../middlewares/errors/error.info.js';
-import { getUser, saveUser, updateUser } from '../services/users.service.js';
-import { createHash, generateToken, isValidPassword } from '../utils.js';
+import { generateMissingEmailErrorInfo, generateMissingIdErrorInfo, generateMissingPasswordErrorInfo, generatePasswordResetErrorInfo, generateUnauthorizedErrorInfo, generateUnhandledErrorInfo, generateUserConflictErrorInfo, generateUserCreateErrorInfo, generateUserLoginErrorInfo } from '../middlewares/errors/error.info.js';
+import { sendEmail } from '../services/mails.service.js';
+import { getUser, recategorizeUser, saveUser, updateUser } from '../services/users.service.js';
+import { createHash, generateToken, isValidPassword, passwordResetTokenVerification } from '../utils.js';
 
 const login = async (req, res) => {
     const {email, password} = req.body;
@@ -39,7 +40,7 @@ const login = async (req, res) => {
         delete user.password;
         delete user.first_name;
         delete user.last_name;
-        const accessToken = generateToken(user);
+        const accessToken = generateToken(user, '24hs');
         res.cookie('session', accessToken, {maxAge: 60*60*1000, httpOnly: true}).send({ status: 'success', accessToken });  //?OJOACAAAAAA
     } catch (e) {
         switch (e.code) {
@@ -86,6 +87,7 @@ const register = async (req, res) => {
                 code: errorsEnum.CONFLICT_ERROR
             });
         };
+        // PASAR HASHEO DE PASSWORD A LA CAPA DE SERVICIOS
         const hashedPassword = createHash(password);
         const newUser = {...req.body};
         if (role !== accessRolesEnum.ADMIN || role == null) newUser.role = accessRolesEnum.USER;
@@ -183,10 +185,163 @@ const current = (req, res) => {
     res.send(req.user);
 };
 
+const recategorize = async (req, res) => {
+    const {id} = req.params;
+    if (!id) {
+        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
+        throw CustomError.createError({
+            name: 'Update User Error',
+            cause: generateMissingIdErrorInfo(),
+            message: 'Error trying to update user.',
+            code: errorsEnum.INCOMPLETE_VALUES_ERROR
+        });
+    };
+    try {
+        const result = await recategorizeUser(id);
+        return res.send({ status: 'success', result });
+    } catch (e) {
+        switch (e.code) {
+            case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
+            case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
+                throw e;
+            default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
+                throw CustomError.createError({
+                    name: 'Unhandled Error',
+                    cause: generateUnhandledErrorInfo(),
+                    message: 'Something unexpected happened.',
+                    code: errorsEnum.UNHANDLED_ERROR
+                });
+        };
+    };
+};
+
+const requestPasswordReset = async (req, res) => {
+    const {token} = req.query;
+    if (token) {
+        const decodedToken = passwordResetTokenVerification(token);
+        if (!decodedToken) {
+            req.logger.info('Unauthorized Error: Incorrect credentials.');
+            throw CustomError.createError({
+                name: 'Login Error',
+                cause: generateUserLoginErrorInfo(),
+                message: 'Invalid JWT.',
+                code: errorsEnum.UNAUTHORIZED_ERROR
+            });
+        };
+        const password = req.body;
+        if (!password) {
+            req.logger.warning('Missing Values Error: Expected Parameter (Password) Is Missing.');
+            throw CustomError.createError({
+                name: 'Reset Password Error',
+                cause: generateMissingPasswordErrorInfo(),
+                message: 'Error trying to reset password.',
+                code: errorsEnum.INCOMPLETE_VALUES_ERROR
+            });
+        };
+        const email = decodedToken.email;
+        try {
+            const user = await getUser(email);
+            const samePassword = isValidPassword(password, user.password);
+            if (samePassword) {
+                req.logger.info('Same Password Error: New Password is Equal to Old Password.');
+                throw CustomError.createError({
+                    name: 'Reset Password Error',
+                    cause: generatePasswordResetErrorInfo(),
+                    message: 'Error trying to reset password.',
+                    code: errorsEnum.INCOMPLETE_VALUES_ERROR
+                });
+            };
+            const hashedPassword = createHash(password);
+            user.password = hashedPassword;
+            const result = await updateUser(user.id, user);
+            return res.send({status:'success', message: 'Your Password Was Reseted Successfully'});
+        } catch (e) {
+            switch (e.code) {
+                case errorsEnum.DATABASE_ERROR:
+                    req.logger.fatal('Fatal Error: Database Failure.');
+                    throw e
+                case errorsEnum.NOT_FOUND_ERROR:
+                    req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                    throw e
+                case errorsEnum.VALIDATION_ERROR:
+                    req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
+                    throw e;
+                default:
+                    req.logger.error('Unhandled Error: Unexpected Error Occurred.');
+                    throw CustomError.createError({
+                        name: 'Unhandled Error',
+                        cause: generateUnhandledErrorInfo(),
+                        message: e.message,
+                        code: errorsEnum.UNHANDLED_ERROR
+                });
+            };
+        };
+    } else {
+        const {email} = req.body;
+        if (!email) {
+            req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
+            throw CustomError.createError({
+                name: 'Reset Password Error',
+                cause: generateMissingEmailErrorInfo(),
+                message: 'Error trying to reset password.',
+                code: errorsEnum.INCOMPLETE_VALUES_ERROR
+            });
+        };
+        try {
+            const user = await getUser(email);
+            if (!user) {
+                req.logger.info('Unauthorized Error: Incorrect credentials.');
+                throw CustomError.createError({
+                    name: 'Login Error',
+                    cause: generateUserLoginErrorInfo(),
+                    message: 'Invalid Credentials.',
+                    code: errorsEnum.UNAUTHORIZED_ERROR
+                });
+            };
+            delete user.password;
+            delete user.first_name;
+            delete user.last_name;
+            user.role = 'PASSWORDRESET';
+            const accessToken = generateToken(user, '1h');
+            const result = await sendEmail(email, accessToken);
+            return res.send({status: 'success', result});
+        } catch (e) {
+            switch (e.code) {
+                case errorsEnum.DATABASE_ERROR:
+                    req.logger.fatal('Fatal Error: Database Failure.');
+                    throw e
+                case errorsEnum.NOT_FOUND_ERROR:
+                    req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                    throw e
+                case errorsEnum.VALIDATION_ERROR:
+                    req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
+                    throw e;
+                default:
+                    req.logger.error('Unhandled Error: Unexpected Error Occurred.');
+                    throw CustomError.createError({
+                        name: 'Unhandled Error',
+                        cause: generateUnhandledErrorInfo(),
+                        message: e.message,
+                        code: errorsEnum.UNHANDLED_ERROR
+                    });
+            };
+        };
+    };
+};
+
 export {
     login,
     register,
     updateUserData,
     logout,
-    current
+    current,
+    recategorize,
+    requestPasswordReset
 };

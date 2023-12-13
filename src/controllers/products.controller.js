@@ -1,3 +1,4 @@
+import { adminKey } from '../config/config.js';
 import { errorsEnum } from '../config/enums.js';
 import CustomError from '../middlewares/errors/CustomError.js';
 import { generateMissingIdErrorInfo, generateProductCreateErrorInfo, generateServerErrorInfo, generateUnauthorizedErrorInfo, generateUnhandledErrorInfo } from '../middlewares/errors/error.info.js';
@@ -85,6 +86,7 @@ const newProduct = async (req, res) => {
             code: errorsEnum.INCOMPLETE_VALUES_ERROR
         });
     };
+    const owner = req.user.role === adminKey ? 'admin' : req.user.email;
     const product = {
         title,
         category,
@@ -92,7 +94,8 @@ const newProduct = async (req, res) => {
         code,
         price,
         stock,
-        thumbnail: thumbnail ? thumbnail : []
+        thumbnail: thumbnail ? thumbnail : [],
+        owner
     };
     try {
         const result = await saveProduct(product);
@@ -142,8 +145,9 @@ const updateProductById = async (req, res) => {
         });
     };
     const data = {title, category, description, code, price, stock, thumbnail};
+    const owner = req.user.role === adminKey ? 'admin' : req.user.email;
     try {
-        const result = await updateProduct(id, data);
+        const result = await updateProduct(id, owner, data);
         res.send({ status: 'success', result });
     } catch (e) {
         switch (e.code) {
@@ -155,6 +159,9 @@ const updateProductById = async (req, res) => {
                 throw e
             case errorsEnum.VALIDATION_ERROR:
                 req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
+                throw e;
+            case errorsEnum.UNAUTHORIZED_ERROR:
+                req.logger.warning('Unauthorized Error: Unauthorized request.');
                 throw e;
             default:
                 req.logger.error('Unhandled Error: Unexpected Error Occurred.');
@@ -179,8 +186,9 @@ const deleteProductById = async (req, res) => {
             code: errorsEnum.INCOMPLETE_VALUES_ERROR
         });
     };
+    const owner = req.user.role === adminKey ? 'admin' : req.user.email;
     try {
-        const result = await deleteProduct(id);
+        const result = await deleteProduct(id, owner);
         res.send({ status: 'success', result }); 
     } catch (e) {
         switch (e.code) {
