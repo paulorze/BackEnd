@@ -33,14 +33,14 @@ const login = async (req, res) => {
             throw CustomError.createError({
                 name: 'Login Error',
                 cause: generateUserLoginErrorInfo(),
-                message: 'Error trying to login.',
+                message: 'Incorrect Credentials.',
                 code: errorsEnum.UNAUTHORIZED_ERROR
             });
         };
         delete user.password;
         delete user.first_name;
         delete user.last_name;
-        const accessToken = generateToken(user, '24hs');
+        const accessToken = generateToken(user, '24h');
         res.cookie('session', accessToken, {maxAge: 60*60*1000, httpOnly: true}).send({ status: 'success', accessToken });  //?OJOACAAAAAA
     } catch (e) {
         switch (e.code) {
@@ -52,6 +52,9 @@ const login = async (req, res) => {
                 throw e
             case errorsEnum.VALIDATION_ERROR:
                 req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
+                throw e;
+            case errorsEnum.UNAUTHORIZED_ERROR:
+                req.logger.info('Authentication Error: Incorrect Credentials.');
                 throw e;
             default:
                 req.logger.error('Unhandled Error: Unexpected Error Occurred.');
@@ -235,7 +238,7 @@ const requestPasswordReset = async (req, res) => {
                 code: errorsEnum.UNAUTHORIZED_ERROR
             });
         };
-        const password = req.body;
+        const { password } = req.body;
         if (!password) {
             req.logger.warning('Missing Values Error: Expected Parameter (Password) Is Missing.');
             throw CustomError.createError({
@@ -245,7 +248,7 @@ const requestPasswordReset = async (req, res) => {
                 code: errorsEnum.INCOMPLETE_VALUES_ERROR
             });
         };
-        const email = decodedToken.email;
+        const email = decodedToken.user.email;
         try {
             const user = await getUser(email);
             const samePassword = isValidPassword(password, user.password);
@@ -254,13 +257,13 @@ const requestPasswordReset = async (req, res) => {
                 throw CustomError.createError({
                     name: 'Reset Password Error',
                     cause: generatePasswordResetErrorInfo(),
-                    message: 'Error trying to reset password.',
+                    message: 'New Password is Equal to Old Password.',
                     code: errorsEnum.INCOMPLETE_VALUES_ERROR
                 });
             };
             const hashedPassword = createHash(password);
             user.password = hashedPassword;
-            const result = await updateUser(user.id, user);
+            const result = await updateUser(user._id, user);
             return res.send({status:'success', message: 'Your Password Was Reseted Successfully'});
         } catch (e) {
             switch (e.code) {

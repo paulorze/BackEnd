@@ -121,7 +121,9 @@ export const transporter = nodemailer.createTransport({
         user: userNodemailer,
         pass: passwordNodemailer
     },
-    secure: true
+    tls: {
+        rejectUnauthorized: false
+    }
 });
 
 export const passwordResetTokenVerification = (token) => {
