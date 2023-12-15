@@ -217,7 +217,7 @@ const addCartProductById = async (req, res) => {
             case errorsEnum.VALIDATION_ERROR:
                 req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
-            case errorsEnum.CONFLICT_ERRORI:
+            case errorsEnum.CONFLICT_ERROR:
                 req.logger.info('Conflict Error: Users can not add products they own to their carts.');
                 throw e;
             default:

@@ -10,7 +10,7 @@ export default (error, req, res, next) => {
             });
             break;
         case errorsEnum.DATABASE_ERROR:
-            res.status(500).send({
+            res.status(503).send({
                 status: 'error',
                 error: error.name,
                 description: error.cause
