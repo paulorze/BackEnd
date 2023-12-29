@@ -25,7 +25,7 @@ describe('Testing products module', ()=> {
     });
 
     it('GET de /api/products/:id debe devolver el producto correspondiente al ID en URL params.', async ()=>{
-        const {statusCode, _body} = await requester.get('/api/products/65133ab58713bc71aa755593');
+        const {statusCode, _body} = await requester.get(`/api/products/${idExistente}`);
         expect(statusCode).to.be.eql(200);
         expect(_body.result).to.have.property('title');
     });

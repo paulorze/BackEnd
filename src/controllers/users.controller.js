@@ -1,8 +1,8 @@
 import { accessRolesEnum, errorsEnum } from '../config/enums.js';
 import CustomError from '../middlewares/errors/CustomError.js';
-import { generateMissingEmailErrorInfo, generateMissingIdErrorInfo, generateMissingPasswordErrorInfo, generatePasswordResetErrorInfo, generateUnauthorizedErrorInfo, generateUnhandledErrorInfo, generateUserConflictErrorInfo, generateUserCreateErrorInfo, generateUserLoginErrorInfo } from '../middlewares/errors/error.info.js';
+import { generateMissingEmailErrorInfo, generateMissingIdErrorInfo, generateMissingPasswordErrorInfo, generatePasswordResetErrorInfo, generateUnauthorizedErrorInfo, generateUnhandledErrorInfo, generateUserConflictErrorInfo, generateUserCreateErrorInfo, generateUserLoginErrorInfo, generateUserUpdateErrorInfo } from '../middlewares/errors/error.info.js';
 import { sendEmail } from '../services/mails.service.js';
-import { getUser, recategorizeUser, saveUser, updateUser } from '../services/users.service.js';
+import { getUser, recategorizeUser, saveUser, updateUser, deleteById, getUserByEmail } from '../services/users.service.js';
 import { createHash, generateToken, isValidPassword, passwordResetTokenVerification } from '../utils.js';
 
 const login = async (req, res) => {
@@ -121,39 +121,21 @@ const register = async (req, res) => {
 };
 
 const updateUserData = async (req, res) => {
-    const {id} = req.params;
-    if (!id) {
+    const id = req.user['_id'];
+    const { username, first_name, last_name, email } = req.body;
+    if (!username || !first_name || !last_name || !email ){
         req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
         throw CustomError.createError({
             name: 'Update User Error',
-            cause: generateMissingIdErrorInfo(),
+            cause: generateUserUpdateErrorInfo({username, first_name, last_name, email}),
             message: 'Error trying to update user.',
             code: errorsEnum.INCOMPLETE_VALUES_ERROR
         });
     };
-    if (id != req.user._id) {
-        req.logger.error('Unauthorized Access Error: Unauthorized User Trying To Access Priviliged Functions.');
-        throw CustomError.createError({
-            name: 'Unauthorized Access Error',
-            cause: generateUnauthorizedErrorInfo(),
-            message: 'You have no permissions to access the requested resource.',
-            code: errorsEnum.UNAUTHORIZED_ERROR
-        });
-    };
-    const { username, first_name, last_name, email, password } = req.body;
-    if (!username || !first_name || !last_name || !email || !password){
-        req.logger.warning('Missing Values Error: Expected Parameters Are Missing.');
-        throw CustomError.createError({
-            name: 'Update User Error',
-            cause: generateUserCreateErrorInfo({username, first_name, last_name, email, password}),
-            message: 'Error trying to update user.',
-            code: errorsEnum.INCOMPLETE_VALUES_ERROR
-        });
-    };
-    const hashedPassword = createHash(password);
-    const updatedUser = { username, first_name, last_name, email, password : hashedPassword, role: req.user.role };
+    const user = await getUser(req.user.email);
+    const updatedUser = { ...user, username, first_name, last_name, email };
     try {
-        const result = updateUser(id, updatedUser);
+        const result = await updateUser(id, updatedUser);
         return res.send({ status: 'success', result });
     } catch (e) {
         switch (e.code) {
@@ -185,7 +167,7 @@ const logout = (req, res) => {
 };
 
 const current = (req, res) => {
-    res.send(req.user);
+    res.send({status: 'success', result: req.user});
 };
 
 const recategorize = async (req, res) => {
@@ -339,6 +321,62 @@ const requestPasswordReset = async (req, res) => {
     };
 };
 
+const deleteUser = async (req, res) => {
+    try {
+        const id = req.user._id;
+        const result = await deleteById(id);
+        return res.send({status: 'success', result});
+    } catch (e) {
+        switch (e.code) {
+            case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
+            case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
+                throw e;
+            default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
+                throw CustomError.createError({
+                    name: 'Unhandled Error',
+                    cause: generateUnhandledErrorInfo(),
+                    message: e.message,
+                    code: errorsEnum.UNHANDLED_ERROR
+                });
+            }
+    };
+};
+
+const getByEmail = async (req, res) => {
+    try {
+        const {email} = req.params;
+        const result = await getUserByEmail(email);
+        return res.send({status: 'success', result});
+    } catch (e) {
+        switch (e.code) {
+            case errorsEnum.DATABASE_ERROR:
+                req.logger.fatal('Fatal Error: Database Failure.');
+                throw e
+            case errorsEnum.NOT_FOUND_ERROR:
+                req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                throw e
+            case errorsEnum.VALIDATION_ERROR:
+                req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
+                throw e;
+            default:
+                req.logger.error('Unhandled Error: Unexpected Error Occurred.');
+                throw CustomError.createError({
+                    name: 'Unhandled Error',
+                    cause: generateUnhandledErrorInfo(),
+                    message: e.message,
+                    code: errorsEnum.UNHANDLED_ERROR
+                });
+            };
+    };
+};
+
 export {
     login,
     register,
@@ -346,5 +384,7 @@ export {
     logout,
     current,
     recategorize,
-    requestPasswordReset
+    requestPasswordReset,
+    deleteUser,
+    getByEmail
 };

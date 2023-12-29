@@ -28,7 +28,7 @@ export default class Users extends Parent {
     };
 
     recategorize = async (id) => {
-        const user = this.readByID(id);
+        const user = await this.readByID(id);
         user.role = user.role === premiumKey ? 'USER' : premiumKey;
         try {
             return this.update(id, user);
@@ -42,5 +42,4 @@ export default class Users extends Parent {
         };
     };
 
-    
 };

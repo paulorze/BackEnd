@@ -79,7 +79,7 @@ const newCart = async (req, res) => {
             code: errorsEnum.INCOMPLETE_VALUES_ERROR
         });
     };
-    const cart = {email, products: []};
+    const cart = {purchaser: email, products: []};
     try {
         const result = await saveCart(cart);
         res.send({ status: 'success', result }); 
@@ -154,7 +154,7 @@ const addCartProducts = async (req, res) =>  {
         throw CustomError.createError({
             name: 'Add products array to cart Error',
             cause: generateCartAddProductArrayErrorInfo(products),
-            message: 'Error trying to create new user.',
+            message: 'Error trying to update cart.',
             code: errorsEnum.INCOMPLETE_VALUES_ERROR
         });
     };

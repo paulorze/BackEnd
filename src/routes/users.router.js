@@ -1,6 +1,6 @@
 import Router from "./router.js";
 import { accessRolesEnum, passportStrategiesEnum } from "../config/enums.js";
-import { login, logout, register, updateUserData, current, recategorize, requestPasswordReset } from "../controllers/users.controller.js";
+import { login, logout, register, updateUserData, current, recategorize, requestPasswordReset, deleteUser, getByEmail } from "../controllers/users.controller.js";
 
 export default class SessionsRouter extends Router {
     constructor(){
@@ -10,10 +10,12 @@ export default class SessionsRouter extends Router {
     init() {
         this.post('/login', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, login);
         this.post('/register', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING, register);
-        this.put('/updateUser/:id', [accessRolesEnum.USER, accessRolesEnum.PREMIUM, accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, updateUserData);
+        this.put('/updateUser', [accessRolesEnum.USER, accessRolesEnum.PREMIUM, accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, updateUserData);
         this.get('/logout', [accessRolesEnum.USER, accessRolesEnum.PREMIUM, accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, logout);
         this.get('/current', [accessRolesEnum.USER, accessRolesEnum.PREMIUM, accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, current);
         this.post('/premium/:id', [accessRolesEnum.ADMIN], passportStrategiesEnum.JWT,recategorize);
         this.post('/passwordReset', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING,requestPasswordReset);
+        this.delete('/', [accessRolesEnum.USER, accessRolesEnum.PREMIUM], passportStrategiesEnum.JWT, deleteUser);
+        this.get('/getByEmail/:email', [accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, getByEmail);
     };
 };

@@ -24,7 +24,15 @@ const deleteUser = async (id) => {
 
 const recategorizeUser = async (id) => {
     return await usersManager.recategorize(id);
-}
+};
+
+const deleteById = async (id)=> {
+    return await usersManager.delete(id);
+};
+
+const getUserByEmail = async (email) => {
+    return await usersManager.readByEmail(email);
+};
 
 export {
     getUser,
@@ -32,5 +40,7 @@ export {
     saveUser,
     updateUser,
     deleteUser,
-    recategorizeUser
+    recategorizeUser,
+    deleteById,
+    getUserByEmail
 };

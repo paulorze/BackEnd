@@ -34,7 +34,7 @@ export default class Carts extends Parent{
     };
 
     deleteByMail = async (email) => {
-        const cart = this.readByEmail(email);
+        const cart = await this.readByEmail(email);
         if (!cart) {
             throw CustomError.createError({
                 name: 'Object Not Found Error',
@@ -44,7 +44,7 @@ export default class Carts extends Parent{
             });   
         };
         try {
-            const result = this.delete(cart._id);
+            const result = await this.delete(cart._id);
             return result;
         } catch (e) {
             switch (e.code) {
@@ -215,7 +215,7 @@ export default class Carts extends Parent{
                 if (product.pid.stock >= product.quantity) {
                     const subtotal = await productsManager.updateStock(product.pid, product.quantity);
                     total += subtotal;
-                    const authorizedProduct = {id : product.pid._id.toString(), code: product.pid.code, price: product.pid.price}
+                    const authorizedProduct = {id : product.pid._id.toString(), code: product.pid.code, price: product.pid.price, quantity: product.quantity}
                     authorizedProducts.push(authorizedProduct);
                     cart.products.splice(i, 1);
                     i--;

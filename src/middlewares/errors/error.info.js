@@ -119,6 +119,16 @@ const generateUserLoginErrorInfo = () => {
     return `Invalid username or password.`;
 };
 
+const generateUserUpdateErrorInfo = (user) => {
+    return `Incomplete values. List of required properties:
+    * username : needs to be a string, received ${user.username},
+    * first_name : needs to be a string, received ${user.first_name},
+    * last_name : needs to be a string, received ${user.last_name},
+    * email : needs to be a string, received ${user.email},
+    Failed to create user.`;
+};
+
+
 export {
     generateCartAddProductErrorInfo,
     generateCartAddProductArrayErrorInfo,
@@ -143,4 +153,5 @@ export {
     generateUserCreateErrorInfo,
     generateUserConflictErrorInfo,
     generateUserLoginErrorInfo,
+    generateUserUpdateErrorInfo,
 };
