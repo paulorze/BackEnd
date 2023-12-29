@@ -36,7 +36,7 @@ export default class Products extends Parent {
     };
     
     updateProduct = async (id, owner, data)=> {
-        const foundProduct = this.readByID(id);
+        const foundProduct = await this.readByID(id);
         if (owner !== 'admin' && owner !== foundProduct.owner) {
             throw CustomError.createError({
                 name: 'Invalid Key Error',
@@ -104,7 +104,7 @@ export default class Products extends Parent {
     };
 
     deleteProduct = async (id, owner) => {
-        const foundProduct = this.readByID(id);
+        const foundProduct = await this.readByID(id);
         if (owner !== 'admin' && owner !== foundProduct.owner) {
             throw CustomError.createError({
                 name: 'Invalid Key Error',
@@ -140,7 +140,7 @@ export default class Products extends Parent {
             throw CustomError.createError({
                 name: 'Validation Error',
                 cause: generateProductFieldValidationErrorInfo(string, "title"),
-                message: 'The input does not meet the requirements.',
+                message: 'The input does not meet the requirements (title).',
                 code: errorsEnum.VALIDATION_ERROR
             });
         };
@@ -151,7 +151,7 @@ export default class Products extends Parent {
             throw CustomError.createError({
                 name: 'Validation Error',
                 cause: generateProductFieldValidationErrorInfo(category, "category"),
-                message: 'The input does not meet the requirements.',
+                message: 'The input does not meet the requirements (category).',
                 code: errorsEnum.VALIDATION_ERROR
             });
         };
@@ -163,7 +163,7 @@ export default class Products extends Parent {
             throw CustomError.createError({
                 name: 'Validation Error',
                 cause: generateProductFieldValidationErrorInfo(description, "description"),
-                message: 'The input does not meet the requirements.',
+                message: 'The input does not meet the requirements (description).',
                 code: errorsEnum.VALIDATION_ERROR
             });
         };
@@ -174,7 +174,7 @@ export default class Products extends Parent {
             throw CustomError.createError({
                 name: 'Validation Error',
                 cause: generateProductFieldValidationErrorInfo(num, param),
-                message: 'The input does not meet the requirements.',
+                message: 'The input does not meet the requirements (stock or price).',
                 code: errorsEnum.VALIDATION_ERROR
             });
         };
@@ -186,7 +186,7 @@ export default class Products extends Parent {
             throw CustomError.createError({
                 name: 'Validation Error',
                 cause: generateProductFieldValidationErrorInfo(code, "code"),
-                message: 'The input does not meet the requirements.',
+                message: 'The input does not meet the requirements (code).',
                 code: errorsEnum.VALIDATION_ERROR
             });
         };

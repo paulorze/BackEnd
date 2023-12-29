@@ -78,13 +78,16 @@ export default class Parent {
                 });            
             };
             return object;
-        } catch {
+        } catch (e) {
+            if (e?.code === errorsEnum.NOT_FOUND_ERROR) {
+                throw e;
+            };
             throw CustomError.createError({
                 name: 'Database Error',
                 cause: generateDatabaseErrorInfo(),
-                message: 'Error trying connect to the database.',
+                message: 'Error trying to connect to the database.',
                 code: errorsEnum.DATABASE_ERROR
-            });        
+            });
         };
     };
 

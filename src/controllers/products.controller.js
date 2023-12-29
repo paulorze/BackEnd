@@ -107,7 +107,7 @@ const newProduct = async (req, res) => {
                 throw e
             case errorsEnum.NOT_FOUND_ERROR:
                 req.logger.warning('Error 404: The Requested Object Has Not Been Found');
-                throw e
+                throw e;
             case errorsEnum.VALIDATION_ERROR:
                 req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
                 throw e;
