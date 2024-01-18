@@ -1,8 +1,6 @@
-import {Router as expressRouter } from 'express';
-import jwt from 'passport-jwt';
+import { Router as expressRouter } from 'express';
 import passport from 'passport';
 import { passportStrategiesEnum } from '../config/enums.js';
-import { privateKeyJWT } from '../config/config.js';
 
 export default class Router {
     constructor() {

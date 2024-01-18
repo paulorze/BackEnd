@@ -2,8 +2,8 @@ import Users from "../dao/classes/users.dao.js";
 
 const usersManager = new Users();
 
-const getUser = async (email) => {
-    return await usersManager.readByEmail(email);
+const getUser = async (id) => {
+    return await usersManager.readByID(id);
 };
 
 const getUserList = async () => {
@@ -34,6 +34,10 @@ const getUserByEmail = async (email) => {
     return await usersManager.readByEmail(email);
 };
 
+const updateLastConnection = async (email) => {
+    return await usersManager.updateLastConnectionRepo(email);
+};
+
 export {
     getUser,
     getUserList,
@@ -42,5 +46,6 @@ export {
     deleteUser,
     recategorizeUser,
     deleteById,
-    getUserByEmail
+    getUserByEmail,
+    updateLastConnection
 };

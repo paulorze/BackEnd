@@ -30,6 +30,14 @@ const generateDatabaseErrorInfo = () => {
     return `Error trying to connect to the database. Operation failed.`
 };
 
+const generateDocumentationErrorInfo = () => {
+    return `Incomplete documentation. The needed documentation is:
+    * Identificacion
+    * Comprobante de domicilio
+    * Comprobante de estado de cuenta
+    `
+};
+
 const generateEmptyCartErrorInfo = () => {
     return `Cart contains no products.`
 };
@@ -49,6 +57,11 @@ const generateMessageCreateErrorInfo = (message) => {
 const generateMissingEmailErrorInfo = () => {
     return `Missing Email parameter.`
 };
+
+const generateMissingFilesErrorInfo = () => {
+    return `Missing Files to upload.`
+};
+
 
 const generateMissingIdErrorInfo = () => {
     return `Missing ID parameter.`
@@ -136,11 +149,13 @@ export {
     generateCartCreateErrorInfo,
     generateCartDeleteProductErrorInfo,
     generateDatabaseErrorInfo,
+    generateDocumentationErrorInfo,
     generateEmptyCartErrorInfo,
     generateInvalidKeysErrorInfo,
     generateMessageCreateErrorInfo,
     generateMissingIdErrorInfo,
     generateMissingEmailErrorInfo,
+    generateMissingFilesErrorInfo,
     generateMissingPasswordErrorInfo,
     generatePasswordResetErrorInfo,
     generateProductNotFoundErrorInfo,

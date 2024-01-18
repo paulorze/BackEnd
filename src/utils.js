@@ -116,6 +116,7 @@ export const addLogger = (req, res, next) => {
     next();
 };
 
+// Esto corresponde al mail
 export const transporter = nodemailer.createTransport({
     service:'gmail',
     auth: {
@@ -135,3 +136,4 @@ export const passwordResetTokenVerification = (token) => {
         return null;
     };
 };
+

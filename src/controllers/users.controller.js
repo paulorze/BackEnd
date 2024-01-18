@@ -1,9 +1,10 @@
 import { accessRolesEnum, errorsEnum } from '../config/enums.js';
 import CustomError from '../middlewares/errors/CustomError.js';
-import { generateMissingEmailErrorInfo, generateMissingIdErrorInfo, generateMissingPasswordErrorInfo, generatePasswordResetErrorInfo, generateUnauthorizedErrorInfo, generateUnhandledErrorInfo, generateUserConflictErrorInfo, generateUserCreateErrorInfo, generateUserLoginErrorInfo, generateUserUpdateErrorInfo } from '../middlewares/errors/error.info.js';
+import { generateMissingEmailErrorInfo, generateMissingFilesErrorInfo, generateMissingIdErrorInfo, generateMissingPasswordErrorInfo, generatePasswordResetErrorInfo, generateUnauthorizedErrorInfo, generateUnhandledErrorInfo, generateUserConflictErrorInfo, generateUserCreateErrorInfo, generateUserLoginErrorInfo, generateUserUpdateErrorInfo } from '../middlewares/errors/error.info.js';
 import { sendEmail } from '../services/mails.service.js';
-import { getUser, recategorizeUser, saveUser, updateUser, deleteById, getUserByEmail } from '../services/users.service.js';
+import { getUser, recategorizeUser, saveUser, updateUser, deleteById, getUserByEmail, updateLastConnection } from '../services/users.service.js';
 import { createHash, generateToken, isValidPassword, passwordResetTokenVerification } from '../utils.js';
+import { deleteFiles } from '../utils/fileUploader.js';
 
 const login = async (req, res) => {
     const {email, password} = req.body;
@@ -17,7 +18,7 @@ const login = async (req, res) => {
         });
     }
     try {
-        const user = await getUser(email);
+        const user = await getUserByEmail(email);
         if (!user) {
             req.logger.info('Unauthorized Error: Incorrect credentials.');
             throw CustomError.createError({
@@ -40,6 +41,7 @@ const login = async (req, res) => {
         delete user.password;
         delete user.first_name;
         delete user.last_name;
+        await updateLastConnection(email);
         const accessToken = generateToken(user, '24h');
         res.cookie('session', accessToken, {maxAge: 60*60*1000, httpOnly: true}).send({ status: 'success', accessToken });  //?OJOACAAAAAA
     } catch (e) {
@@ -80,7 +82,7 @@ const register = async (req, res) => {
         });
     };
     try {
-        const exists = await getUser(email);
+        const exists = await getUserByEmail(email);
         if (exists) {
             req.logger.info('Conflict Error: Trying To Register Existing Email.');
             throw CustomError.createError({
@@ -132,7 +134,7 @@ const updateUserData = async (req, res) => {
             code: errorsEnum.INCOMPLETE_VALUES_ERROR
         });
     };
-    const user = await getUser(req.user.email);
+    const user = await getUserByEmail(req.user.email);
     const updatedUser = { ...user, username, first_name, last_name, email };
     try {
         const result = await updateUser(id, updatedUser);
@@ -160,7 +162,8 @@ const updateUserData = async (req, res) => {
     };
 };
 
-const logout = (req, res) => {
+const logout = async (req, res) => {
+    await updateLastConnection(req.user.email);
     delete req.user;
     res.clearCookie('session');
     res.redirect('/login');
@@ -232,7 +235,7 @@ const requestPasswordReset = async (req, res) => {
         };
         const email = decodedToken.user.email;
         try {
-            const user = await getUser(email);
+            const user = await getUserByEmail(email);
             const samePassword = isValidPassword(password, user.password);
             if (samePassword) {
                 req.logger.info('Same Password Error: New Password is Equal to Old Password.');
@@ -280,7 +283,7 @@ const requestPasswordReset = async (req, res) => {
             });
         };
         try {
-            const user = await getUser(email);
+            const user = await getUserByEmail(email);
             if (!user) {
                 req.logger.info('Unauthorized Error: Incorrect credentials.');
                 throw CustomError.createError({
@@ -377,6 +380,118 @@ const getByEmail = async (req, res) => {
     };
 };
 
+    const uploadFiles = async (req, res) => {
+        const files = req.files;
+        if (!files) {
+            req.logger.info('Bad Request Error: Missing Files.');
+            throw CustomError.createError({
+                name: 'File Upload Error',
+                cause: generateMissingFilesErrorInfo(),
+                message: 'No files have been uploaded.',
+                code: errorsEnum.INCOMPLETE_VALUES_ERROR
+            });
+        };
+        const {id} = req.params;
+        if (id !== req.user._id) {
+            deleteFiles(files);
+            req.logger.info('Unauthorized Error: Incorrect credentials.');
+            throw CustomError.createError({
+                name: 'Authorization Error',
+                cause: generateUnauthorizedErrorInfo(),
+                message: "You are not allowed to change other user's data.",
+                code: errorsEnum.UNAUTHORIZED_ERROR
+            });
+        };
+        const user = await getUser(id);
+        if (!user) {
+            deleteFiles(files);
+            req.logger.info('Unauthorized Error.');
+            throw CustomError.createError({
+                name: 'Authorization Error',
+                cause: generateUserLoginErrorInfo(),
+                message: 'Invalid User.',
+                code: errorsEnum.UNAUTHORIZED_ERROR
+            });
+        };
+        try {
+            const documents = user.documents;
+            if (files.Identificacion) {
+                const identificacionIndex = documents.findIndex(doc => doc.name === 'Identificacion');
+                if (identificacionIndex !== -1) {
+                    documents[identificacionIndex] = {
+                        name: "Identificacion",
+                        reference:`${files.Identificacion[0].path}` 
+                    };
+                } else {
+                    documents.push({
+                        name: "Identificacion",
+                        reference: `${files.Identificacion[0]['path']}`
+                    });
+                };
+            };
+            if (files["Comprobante de domicilio"]) {
+                const domicilioIndex = documents.findIndex(doc => doc.name === 'Comprobante de domicilio');
+                if (domicilioIndex !== -1) {
+                    documents[domicilioIndex] = {
+                        name: "Comprobante de domicilio",
+                        reference: `${files["Comprobante de domicilio"][0].path}` 
+                    };
+                } else {
+                    documents.push({
+                        name: "Comprobante de domicilio",
+                        reference: `${files["Comprobante de domicilio"][0].path}` 
+                    });
+                };
+            };
+            if (files["Comprobante de estado de cuenta"]) {
+                const cuentaIndex = documents.findIndex(doc => doc.name === 'Comprobante de estado de cuenta');
+                if (cuentaIndex !== -1) {
+                    documents[cuentaIndex] = {
+                        name: "Comprobante de estado de cuenta",
+                        reference: `${files["Comprobante de estado de cuenta"][0].path}`
+                    };
+                } else {
+                    documents.push({
+                        name: "Comprobante de estado de cuenta",
+                        reference: `${files["Comprobante de estado de cuenta"][0].path}`
+                    });
+                };
+            };
+            const updatedUser = {...user, documents};
+            console.log(updatedUser)
+            await updateUser(id, updatedUser);
+            const response = [];
+            for (const key in files) {
+                response.push(`Nombre original de la imagen: ${files[key][0].originalname} \n Direccion de la imagen: ${files[key][0].path} \n`);
+            };
+            const finalResponse = response.length > 0
+                ? "Se han subido las siguientes imágenes:\n" + response.join('')
+                : "No se han subido imágenes.";
+            return res.send({status: 'success', respone: finalResponse});    
+        } catch (e) {
+            deleteFiles(files);
+            switch (e.code) {
+                case errorsEnum.DATABASE_ERROR:
+                    req.logger.fatal('Fatal Error: Database Failure.');
+                    throw e
+                case errorsEnum.NOT_FOUND_ERROR:
+                    req.logger.warning('Error 404: The Requested Object Has Not Been Found');
+                    throw e
+                case errorsEnum.VALIDATION_ERROR:
+                    req.logger.info('Validation Error: Sent Values Do Not Meet Expectations.');
+                    throw e;
+                default:
+                    req.logger.error('Unhandled Error: Unexpected Error Occurred.');
+                    throw CustomError.createError({
+                        name: 'Unhandled Error',
+                        cause: generateUnhandledErrorInfo(),
+                        message: e.message,
+                        code: errorsEnum.UNHANDLED_ERROR
+                    });
+            };
+        };
+    };
+
 export {
     login,
     register,
@@ -386,5 +501,6 @@ export {
     recategorize,
     requestPasswordReset,
     deleteUser,
-    getByEmail
+    getByEmail,
+    uploadFiles
 };

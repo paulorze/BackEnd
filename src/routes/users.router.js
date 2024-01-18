@@ -1,6 +1,7 @@
 import Router from "./router.js";
 import { accessRolesEnum, passportStrategiesEnum } from "../config/enums.js";
-import { login, logout, register, updateUserData, current, recategorize, requestPasswordReset, deleteUser, getByEmail } from "../controllers/users.controller.js";
+import { login, logout, register, updateUserData, current, recategorize, requestPasswordReset, deleteUser, getByEmail, uploadFiles } from "../controllers/users.controller.js";
+import { uploader } from "../utils/fileUploader.js";
 
 export default class SessionsRouter extends Router {
     constructor(){
@@ -17,5 +18,12 @@ export default class SessionsRouter extends Router {
         this.post('/passwordReset', [accessRolesEnum.PUBLIC], passportStrategiesEnum.NOTHING,requestPasswordReset);
         this.delete('/', [accessRolesEnum.USER, accessRolesEnum.PREMIUM], passportStrategiesEnum.JWT, deleteUser);
         this.get('/getByEmail/:email', [accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, getByEmail);
+        this.post('/:id/documents', [accessRolesEnum.USER, accessRolesEnum.PREMIUM, accessRolesEnum.ADMIN], passportStrategiesEnum.JWT, uploader.fields([
+            {name: 'profile', maxCount: 1},
+            {name: 'products', maxCount: 5},
+            {name: 'Identificacion', maxCount: 1},
+            {name: 'Comprobante de domicilio', maxCount: 1},
+            {name: 'Comprobante de estado de cuenta', maxCount: 1}
+        ]), uploadFiles)
     };
 };
